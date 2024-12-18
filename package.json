@@ -3,11 +3,18 @@
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
+  "type": "module",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "start": "npx tsx --env-file=.env --watch  src/index.ts"
   },
-  "dependencies": {},
+  "dependencies": {
+    "express": "^5.0.1",
+    "ts-node": "^10.9.2"
+  },
   "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.2",
     "typescript": "^5.5.3"
   },
   "private": true
