@@ -1,6 +1,7 @@
 import {CardItem} from "../types/cardItem.js";
-import {Player} from "./PlayerClass.js";
+import {Player} from "./playerClass";
 import {CardType} from "../types/cardType.js";
+import {HighScoreType} from "../types/highScoreType.js";
 
 export class GameEngine {
     private deck: CardItem[] = [];
@@ -8,26 +9,26 @@ export class GameEngine {
     private activePlayerId = '';
     readonly maxTurnLength: number;
     private turnTimerId: ReturnType<typeof setTimeout>;
+    private partialHighScores: HighScoreType[] = [];
     public cardsOnTable: CardItem[] = [];
     public currentRound: number;
 
     constructor(private maxPlayers: number, turnLength = 15) {
-        this.activePlayerId = this.players[0].id;
         this.currentRound = 0;
         this.maxTurnLength = turnLength * 1000;
         this.turnTimerId = setTimeout(() => {
         }, this.maxTurnLength);
-        this.initDeck();
     }
 
     private initDeck() {
         // const cardTypes = Object.keys(CardType) as CardType[];
         const cardTypes = [CardType.Spades, CardType.Hearts];
-        const cardValues = Array(10).fill(undefined).map((_, index) => index + 1);
-        for (const type of cardTypes) {
-            for (const value of cardValues) {
-                this.deck = [{type, value}];
-            }
+        const cardValues = [];
+        for (let i = 0; i < 15 * cardTypes.length; i++) {
+            cardValues.push(i+1);
+        }
+        for (let i = 0; i < cardValues.length; i++) {
+            this.deck.push({type: cardTypes[i%2], value: cardValues[i%15]});
         }
 
         this.shuffleDeck();
@@ -42,6 +43,9 @@ export class GameEngine {
             throw new Error("Not enough cards in the deck");
         }
         for (const player of this.players) {
+            if (player.state === 'played') {
+                continue;
+            }
             player.hand = this.deck.splice(0, cardsPerPlayer);
         }
     }
@@ -55,6 +59,7 @@ export class GameEngine {
             player.state = 'waiting';
         } else {
             player.state = 'active';
+            this.activePlayerId = player.id;
         }
 
     }
@@ -73,7 +78,7 @@ export class GameEngine {
             throw new Error("No players to start the game");
         }
 
-        this.currentRound++;
+        this.initDeck();
         this.dealCards(6);
         this.cardsOnTable = [];
         this.startRound(currentPlayer);
@@ -81,6 +86,34 @@ export class GameEngine {
 
     public startRound(player: Player) {
         this.currentRound++;
+
+        if (!this.deck.length) {
+            if (this.players.some(player => player.state === 'waiting') &&
+                !this.players.every(player => player.state === 'waiting')) {
+                this.partialHighScores = this.computeHighScores();
+                this.players.map(player => player.resetCollectedCards())
+                this.initDeck();
+                this.dealCards(1);
+                this.startRound(player);
+                //     call dealCards only for the waiting players
+                //     call startAction
+            }
+            if (this.players.every(player => !player.hand.length)) {
+                this.endGame();
+                return;
+            }
+            this.startPlayerAction(player);
+            return;
+        }
+
+        this.players.forEach((player: Player) => {
+            if (this.deck.length) {
+                if (player.hand.length < 6) {
+                    this.getNewCard(player);
+                }
+            }
+        })
+
         if (player.state !== 'active') {
             throw new Error("This is not this players' action");
         }
@@ -93,6 +126,13 @@ export class GameEngine {
             this.endPlayerAction(player, true)
             return;
         }, 15000);
+    }
+
+    public getNewCard(player: Player) {
+        if (!this.deck.length) {
+            throw new Error("No more cards on the deck");
+        }
+        player.hand.push(this.deck.shift()!)
     }
 
     public playCard(player: Player, cardPlayed: CardItem) {
@@ -141,9 +181,11 @@ export class GameEngine {
 
     public finishRound() {
         const roundResult = this.computeRoundWinner();
+        this.partialHighScores = this.computeHighScores();
         if (roundResult.length < 1) {
             throw new Error("No round result");
         }
+
         if (roundResult.length == 1) {
             const nextPlayer = this.players.find(player => player.state === 'played')!;
             this.cardsOnTable = [];
@@ -151,34 +193,38 @@ export class GameEngine {
             nextPlayer.state = 'active';
             this.startRound(nextPlayer);
             return;
-        } else {
-            roundResult.forEach(player => player.state = 'waiting');
-            this.startRound(roundResult[0]);
-
         }
+
+        roundResult.forEach(player => player.state = 'waiting');
+        this.startRound(roundResult[0]);
     }
 
-    private computeFinalScores(): { name: string; id: string; finalScore: number }[] {
+    private computeHighScores(): HighScoreType[] {
         return (
             this.players.map(player => {
                 return {
-                    name: player.name,
-                    id: player.id,
-                    finalScore: player.collectedCards.reduce(
+                    player: Player,
+                    points: player.collectedCards.reduce(
                         (acc, card) => acc + card.value, 0)
                 }
             })
                 .sort(
                     (a, b) =>
-                        b.finalScore - a.finalScore));
+                        b.points - a.points));
     }
 
     public endGame() {
-        const finalScores = this.computeFinalScores();
+        const finalScores = this.computeHighScores();
+        const winnerAnnouncement = `Game Over. ${finalScores[0].player.name} won with ${finalScores[0].points} points`;
+        console.log(winnerAnnouncement);
     }
 
     public getActivePlayerIndex() {
         return this.activePlayerId;
+    }
+
+    public getCurrentPlayers() {
+        return this.players;
     }
 
 }

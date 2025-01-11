@@ -10,7 +10,7 @@ export class Player implements PlayerType {
     name: string;
     state: PlayerState;
 
-    constructor(id: string, name: string, collectedCards: CardItem[], hand: CardItem[] = []) {
+    constructor(id: string, name: string, collectedCards: CardItem[] = [], hand: CardItem[] = []) {
         this.id = id;
         this.name = name;
         this.collectedCards = collectedCards;
@@ -41,6 +41,10 @@ export class Player implements PlayerType {
 
     public winRound(cardsWon: CardItem[]) {
         this.collectedCards = cardsWon;
+    }
+
+    public resetCollectedCards() {
+        this.collectedCards = [];
     }
 
 }
