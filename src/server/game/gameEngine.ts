@@ -7,7 +7,8 @@ export class GameEngine {
     private players: PlayerType[] = [];
     private inactivePlayersId: string[] = [];
     private activePlayerId: string = '';
-    public playedCards: CardItem[] = [];
+    private actionsPerRound = this.players.length;
+    public cardsOnTable: CardItem[] = [];
     public currentRound: number;
 
     constructor(private maxPlayers: number) {
@@ -38,6 +39,9 @@ export class GameEngine {
             throw new Error("Maximum number of players reached");
         }
         this.players.push(player);
+        if (this.activePlayerId !== player.id) {
+            this.inactivePlayersId.push(player.id);
+        }
     }
 
     public startGame() {
@@ -45,11 +49,12 @@ export class GameEngine {
             throw new Error("Game is already underway");
         }
 
-        this.dealCards(6);
         this.currentRound++;
+        this.dealCards(6);
+        this.startRound();
     }
 
-    public dealCards(cardsPerPlayer: number) {
+    private dealCards(cardsPerPlayer: number) {
         if (this.deck.length < cardsPerPlayer * this.players.length) {
             throw new Error("Not enough cards in the deck");
         }
@@ -58,15 +63,20 @@ export class GameEngine {
         }
     }
 
-    public finishRound() {
+    public startRound() {
+        this.cardsOnTable = [];
+        const lastPlayer = this.activePlayerId;
+        this.activePlayerId = this.inactivePlayersId.splice(0, 1).toString();
+        this.inactivePlayersId.push(lastPlayer);
 
     }
 
-    public nextRound() {
-        const lastPlayer = this.activePlayerId;
-        this.playedCards = [];
-        this.activePlayerId = this.inactivePlayersId.splice(0,1).toString();
-        this.inactivePlayersId.push(lastPlayer);
+    public playerAction(player: PlayerType) {
+        this.activePlayerId = this.inactivePlayersId.splice(0, 1).toString();
+        this.inactivePlayersId.push(player.id);
+    }
+
+    private finishRound() {
 
     }
 
@@ -76,8 +86,8 @@ export class GameEngine {
 
     public playCard(player: PlayerType, cardPlayed: CardItem) {
         console.log(`${player.name} played ${cardPlayed.value} of ${cardPlayed.type}`);
-        this.playedCards.push(cardPlayed);
-        this.currentPlayerIndex = this.players.filter(nextPlayer => nextPlayer.id !== player.id)[0].id;
+        this.cardsOnTable.push(cardPlayed);
+        this.activePlayerId = this.players.filter(nextPlayer => nextPlayer.id !== player.id)[0].id;
     }
 
 }
