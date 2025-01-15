@@ -10,7 +10,7 @@ export default defineConfig({
       reportsDirectory:'./tests/unit/coverage'
     },
   },
-// @ts-ignore
+// @ts-expect-error - eslint complains about the type of react not correctly matching the expectation of PluginOptions.
   plugins: [react()],
 
 });
