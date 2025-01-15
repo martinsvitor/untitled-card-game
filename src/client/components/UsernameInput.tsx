@@ -1,9 +1,13 @@
-import { useState } from 'react';
+import { useState, Dispatch, SetStateAction } from 'react';
 
-function UsernameInput({ setUsername }) {
+interface Prop {
+    setUsername: Dispatch<SetStateAction<string>>;
+}
+
+function UsernameInput({ setUsername }: Prop) {
     const [usernameInput, setUsernameInput] = useState('');
 
-    const saveUsername = (input) => {
+    const saveUsername = (input: string) => {
         setUsername(input);
         localStorage.setItem('username', input);
     };
