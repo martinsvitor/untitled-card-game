@@ -186,6 +186,11 @@ export class GameEngine {
             throw new Error("No round result");
         }
 
+        if(this.deck.length) {
+            const currentPlayer = this.players.find(player => player.id === this.activePlayerId)!;
+            currentPlayer.drawCard(this.deck.shift());
+        }
+
         if (roundResult.length == 1) {
             const nextPlayer = this.players.find(player => player.state === 'played')!;
             this.cardsOnTable = [];

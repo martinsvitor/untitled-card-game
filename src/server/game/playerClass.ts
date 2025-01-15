@@ -18,7 +18,10 @@ export class Player implements PlayerType {
         this.state = 'waiting';
     }
 
-    public drawCard(card: CardItem) {
+    public drawCard(card: CardItem | undefined) {
+        if (!card) {
+            throw new Error("No cards to draw");
+        }
         this.hand.push(card);
     }
 
@@ -44,6 +47,7 @@ export class Player implements PlayerType {
     }
 
     public resetCollectedCards() {
+        this.collectedCards.map(card => card.playedBy = '');
         this.collectedCards = [];
     }
 
