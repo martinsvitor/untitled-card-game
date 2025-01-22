@@ -1,10 +1,13 @@
-import { useState, Dispatch, SetStateAction } from 'react';
+import { useState, useContext, Dispatch, SetStateAction } from 'react';
+import { UserContext } from '../App';
 
 interface Prop {
     setUsername: Dispatch<SetStateAction<string>>;
 }
 
-function UsernameInput({ setUsername }: Prop) {
+function UsernameInput() {
+    const { setUsername } = useContext(UserContext);
+
     const [usernameInput, setUsernameInput] = useState('');
 
     const saveUsername = (input: string) => {
@@ -12,8 +15,13 @@ function UsernameInput({ setUsername }: Prop) {
         localStorage.setItem('username', input);
     };
 
+    function submitName(event) {
+        event?.preventDefault();
+        saveUsername(usernameInput);
+    }
+
     return (
-        <form onSubmit={() => saveUsername(usernameInput)}>
+        <form onSubmit={submitName}>
             <label htmlFor='username'>Please enter a name</label>
             <input
                 name='username'
