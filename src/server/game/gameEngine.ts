@@ -10,27 +10,32 @@ export class GameEngine {
     readonly maxTurnLength: number;
     private turnTimerId: ReturnType<typeof setTimeout>;
     private partialHighScores: HighScoreType[] = [];
+    public gameId: string;
     public cardsOnTable: CardItem[] = [];
     public currentRound: number;
+    public cardsLeft: number;
 
     constructor(private maxPlayers: number, turnLength = 15) {
+        this.gameId = Date.now().toString(36);
         this.currentRound = 0;
         this.maxTurnLength = turnLength * 1000;
         this.turnTimerId = setTimeout(() => {
         }, this.maxTurnLength);
+        this.cardsLeft = 56;
     }
 
     private initDeck() {
-        // const cardTypes = Object.keys(CardType) as CardType[];
-        const cardTypes = [CardType.Spades, CardType.Hearts];
+        const cardTypes = Object.keys(CardType) as CardType[];
+        // const cardTypes = [CardType.Spades, CardType.Hearts];
         const cardValues = [];
-        for (let i = 0; i < 15 * cardTypes.length; i++) {
-            cardValues.push(i+1);
+        for (let i = 0; i < 14 * cardTypes.length; i++) {
+            cardValues.push(i + 1);
         }
         for (let i = 0; i < cardValues.length; i++) {
-            this.deck.push({type: cardTypes[i%2], value: cardValues[i%15]});
+            this.deck.push({type: cardTypes[i % 2], value: cardValues[i % 15]});
         }
 
+        this.cardsLeft = this.deck.length;
         this.shuffleDeck();
     }
 
@@ -47,6 +52,7 @@ export class GameEngine {
                 continue;
             }
             player.hand = this.deck.splice(0, cardsPerPlayer);
+            this.cardsLeft=- cardsPerPlayer;
         }
     }
 
@@ -133,6 +139,7 @@ export class GameEngine {
             throw new Error("No more cards on the deck");
         }
         player.hand.push(this.deck.shift()!)
+        this.cardsLeft--;
     }
 
     public playCard(player: Player, cardPlayed: CardItem) {
@@ -155,10 +162,10 @@ export class GameEngine {
 
         if (waitingPlayers.length <= 0) {
             this.finishRound();
+        } else {
+            waitingPlayers[0].state = 'active';
+            this.startPlayerAction(waitingPlayers[0]);
         }
-
-        waitingPlayers[0].state = 'active';
-        this.startPlayerAction(waitingPlayers[0]);
     }
 
     private computeRoundWinner(): Player[] {
@@ -186,7 +193,7 @@ export class GameEngine {
             throw new Error("No round result");
         }
 
-        if(this.deck.length) {
+        if (this.deck.length) {
             const currentPlayer = this.players.find(player => player.id === this.activePlayerId)!;
             currentPlayer.drawCard(this.deck.shift());
         }
