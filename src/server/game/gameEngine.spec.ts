@@ -37,7 +37,6 @@ describe('GameEngine', () => {
             const secondPlayerHand = secondPlayer.hand.sort((a,b) => b.value - a.value);
 
             const fpPlayedCard = firstPlayerHand[0];
-            const spPlayedCard = secondPlayerHand[0];
             firstPlayer.playCard(firstPlayerHand[0], game);
 
             expect(firstPlayer.hand).toEqual(firstPlayerHand);
