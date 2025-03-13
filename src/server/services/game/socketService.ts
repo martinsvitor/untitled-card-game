@@ -11,7 +11,7 @@ export const setupSocket = (io: Server) => {
         socket.on('createGame', (maxPlayers: number) => {
             // When the player creates a game
             const game = new GameEngine(maxPlayers);
-            socket.broadcast.emit('newGame', game);
+            socket.emit('newGame', game);
 
             socket.on("playerJoin", (playerData: Player) => {
                 if (game.getCurrentPlayers().length > maxPlayers) {
@@ -21,18 +21,18 @@ export const setupSocket = (io: Server) => {
                     game.addPlayer(player);
                     console.log(`Player joined:`, playerData);
 
-                    socket.broadcast.emit("newPlayer", playerData); // Notify other players
+                    socket.emit("newPlayer", playerData); // Notify other players
                 }
             });
 
             socket.on('startGame', () => {
                 if (game.getCurrentPlayers().length < 2) {
                     console.log('Not enough players');
-                    socket.broadcast.emit("game started");
+                    socket.emit("game started");
                 } else {
                     game.startGame();
                     console.log('Starting the game');
-                    socket.broadcast.emit("game started");
+                    socket.emit("game started");
                 }
             })
 
