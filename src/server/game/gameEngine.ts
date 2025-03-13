@@ -10,27 +10,52 @@ export class GameEngine {
     readonly maxTurnLength: number;
     private turnTimerId: ReturnType<typeof setTimeout>;
     private partialHighScores: HighScoreType[] = [];
+    public gameId: string;
     public cardsOnTable: CardItem[] = [];
     public currentRound: number;
+    public cardsLeft: number;
+    public gameWinner: string = '';
 
     constructor(private maxPlayers: number, turnLength = 15) {
+        this.gameId = Date.now().toString(36);
         this.currentRound = 0;
         this.maxTurnLength = turnLength * 1000;
         this.turnTimerId = setTimeout(() => {
         }, this.maxTurnLength);
+        this.cardsLeft = 56;
     }
 
     private initDeck() {
-        // const cardTypes = Object.keys(CardType) as CardType[];
-        const cardTypes = [CardType.Spades, CardType.Hearts];
-        const cardValues = [];
-        for (let i = 0; i < 15 * cardTypes.length; i++) {
-            cardValues.push(i+1);
+        const cardTypes = Object.keys(CardType) as CardType[];
+        const cardValues: number[] = [];
+        for (let i = 0; i < 14 * cardTypes.length; i++) {
+            cardValues.push(i + 1);
         }
-        for (let i = 0; i < cardValues.length; i++) {
-            this.deck.push({type: cardTypes[i%2], value: cardValues[i%15]});
+        for (let i = 0; i < cardTypes.length; i++) {
+            let modifier = 0;
+            switch (cardTypes[i]) {
+                case CardType.Clubs:
+                    modifier = .4
+                    break;
+                case CardType.Spades:
+                    modifier = .3
+                    break;
+                case CardType.Hearts:
+                    modifier = .2
+                    break;
+                case CardType.Diamonds:
+                    modifier = .1
+                    break;
+                default:
+                    throw new Error(`Invalid deck type: ${cardTypes[i]}`);
+            }
+            for (let j = 0; j < cardValues.length / 4; j++) {
+                const singleCardValue = cardValues[j % 14] + modifier;
+                this.deck.push({type: cardTypes[i], value: singleCardValue});
+            }
         }
 
+        this.cardsLeft = this.deck.length;
         this.shuffleDeck();
     }
 
@@ -47,6 +72,7 @@ export class GameEngine {
                 continue;
             }
             player.hand = this.deck.splice(0, cardsPerPlayer);
+            this.cardsLeft -= cardsPerPlayer;
         }
     }
 
@@ -87,18 +113,8 @@ export class GameEngine {
     public startRound(player: Player) {
         this.currentRound++;
 
-        if (!this.deck.length) {
-            if (this.players.some(player => player.state === 'waiting') &&
-                !this.players.every(player => player.state === 'waiting')) {
-                this.partialHighScores = this.computeHighScores();
-                this.players.map(player => player.resetCollectedCards())
-                this.initDeck();
-                this.dealCards(1);
-                this.startRound(player);
-                //     call dealCards only for the waiting players
-                //     call startAction
-            }
-            if (this.players.every(player => !player.hand.length)) {
+        if (this.deck.length === 0) {
+            if (this.players.every(player => player.hand.length === 0)) {
                 this.endGame();
                 return;
             }
@@ -133,6 +149,7 @@ export class GameEngine {
             throw new Error("No more cards on the deck");
         }
         player.hand.push(this.deck.shift()!)
+        this.cardsLeft--;
     }
 
     public playCard(player: Player, cardPlayed: CardItem) {
@@ -155,10 +172,10 @@ export class GameEngine {
 
         if (waitingPlayers.length <= 0) {
             this.finishRound();
+        } else {
+            waitingPlayers[0].state = 'active';
+            this.startPlayerAction(waitingPlayers[0]);
         }
-
-        waitingPlayers[0].state = 'active';
-        this.startPlayerAction(waitingPlayers[0]);
     }
 
     private computeRoundWinner(): Player[] {
@@ -169,12 +186,12 @@ export class GameEngine {
             card => this.players.find(player => player.id === card.playedBy)!
         );
         if (winningCard.length > 1) {
-
-            console.log(`It's a Tie! ${winners.map(player => player.name).join(', ')} will play another round. There can only be one!`);
-
-            return winners
+            // Clubs > Spades > Hearts > Diamonds
+            console.warn('Should never be arrived')
+            return winners.map((winner) => winner);
         }
-        winners[0].winRound(this.cardsOnTable);
+        const pointsInTheRound = this.cardsOnTable.reduce((acc, currentValue) => acc + Math.trunc(currentValue.value), 0);
+        winners[0].winRound(this.cardsOnTable, pointsInTheRound);
         return winners;
 
     }
@@ -186,22 +203,16 @@ export class GameEngine {
             throw new Error("No round result");
         }
 
-        if(this.deck.length) {
+        if (this.deck.length) {
             const currentPlayer = this.players.find(player => player.id === this.activePlayerId)!;
             currentPlayer.drawCard(this.deck.shift());
         }
-
-        if (roundResult.length == 1) {
-            const nextPlayer = this.players.find(player => player.state === 'played')!;
-            this.cardsOnTable = [];
-            this.players.forEach(player => player.state = 'waiting');
-            nextPlayer.state = 'active';
-            this.startRound(nextPlayer);
-            return;
-        }
-
-        roundResult.forEach(player => player.state = 'waiting');
-        this.startRound(roundResult[0]);
+        const nextPlayer = this.players.find(player => player.state === 'played')!;
+        this.cardsOnTable = [];
+        this.players.forEach(player => player.state = 'waiting');
+        nextPlayer.state = 'active';
+        this.startRound(nextPlayer);
+        return;
     }
 
     private computeHighScores(): HighScoreType[] {
@@ -209,8 +220,7 @@ export class GameEngine {
             this.players.map(player => {
                 return {
                     player: Player,
-                    points: player.collectedCards.reduce(
-                        (acc, card) => acc + card.value, 0)
+                    points: player.getPoints()
                 }
             })
                 .sort(
@@ -221,6 +231,7 @@ export class GameEngine {
     public endGame() {
         const finalScores = this.computeHighScores();
         const winnerAnnouncement = `Game Over. ${finalScores[0].player.name} won with ${finalScores[0].points} points`;
+        this.gameWinner = finalScores[0].player.name;
         console.log(winnerAnnouncement);
     }
 
@@ -231,5 +242,4 @@ export class GameEngine {
     public getCurrentPlayers() {
         return this.players;
     }
-
 }

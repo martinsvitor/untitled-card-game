@@ -9,6 +9,7 @@ export class Player implements PlayerType {
     id: string;
     name: string;
     state: PlayerState;
+    points: number;
 
     constructor(id: string, name: string, collectedCards: CardItem[] = [], hand: CardItem[] = []) {
         this.id = id;
@@ -16,6 +17,7 @@ export class Player implements PlayerType {
         this.collectedCards = collectedCards;
         this.hand = hand;
         this.state = 'waiting';
+        this.points = 0;
     }
 
     public drawCard(card: CardItem | undefined) {
@@ -42,13 +44,18 @@ export class Player implements PlayerType {
         game.playCard(this, cardToPlay);
     }
 
-    public winRound(cardsWon: CardItem[]) {
+    public winRound(cardsWon: CardItem[], points: number) {
         this.collectedCards = cardsWon;
+        this.points += points;
     }
 
     public resetCollectedCards() {
         this.collectedCards.map(card => card.playedBy = '');
         this.collectedCards = [];
+    }
+
+    public getPoints() {
+        return this.points;
     }
 
 }
