@@ -33,8 +33,8 @@ describe('GameEngine', () => {
         });
 
         it('should have a card on the table after first player\'s turn', () => {
-            const firstPlayerHand = firstPlayer.hand.sort((a,b) => b.value - a.value);
-            const secondPlayerHand = secondPlayer.hand.sort((a,b) => b.value - a.value);
+            const firstPlayerHand = firstPlayer.hand.sort((a, b) => b.value - a.value);
+            const secondPlayerHand = secondPlayer.hand.sort((a, b) => b.value - a.value);
 
             const fpPlayedCard = firstPlayerHand[0];
             firstPlayer.playCard(firstPlayerHand[0], game);
@@ -59,14 +59,14 @@ describe('GameEngine', () => {
         })
 
         it('should play out the game until it\'s over', () => {
-            while(firstPlayer.hand.length > 0) {
-                const firstPlayerHand= firstPlayer.hand;
+            while (firstPlayer.hand.length > 0) {
+                const firstPlayerHand = firstPlayer.hand;
                 const secondPlayerHand = secondPlayer.hand;
                 firstPlayer.playCard(firstPlayerHand[0], game);
                 secondPlayer.playCard(secondPlayerHand[0], game);
             }
 
-            expect(game.endGame).toHaveBeenCalled();
+            expect(game.gameWinner).not.toBeUndefined();
         });
 
     });
