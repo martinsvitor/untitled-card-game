@@ -1,13 +1,13 @@
 import { Routes, Route } from 'react-router';
 import GameList from './GameList';
-import Landingpage from './Landingpage';
+import Game from './Game';
 import NoMatch from './NoMatch';
 
 function Router() {
     return (
         <Routes>
-            <Route path='/' element={<Landingpage />} />
-            <Route path='games' element={<GameList />} />
+            <Route path='/' element={<GameList />} />
+            <Route path=':gameId' element={<Game />} />
             <Route path='*' element={<NoMatch />} />
         </Routes>
     );
