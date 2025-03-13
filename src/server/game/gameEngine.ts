@@ -16,7 +16,7 @@ export class GameEngine {
     public cardsLeft: number;
     public gameWinner: string = '';
 
-    constructor(private maxPlayers: number, turnLength = 15) {
+    constructor(private maxPlayers: number = 4, turnLength = 15) {
         this.gameId = Date.now().toString(36);
         this.currentRound = 0;
         this.maxTurnLength = turnLength * 1000;

@@ -1,6 +1,7 @@
 import express from 'express';
 import ViteExpress from 'vite-express';
 import { Server } from 'socket.io';
+import {setupSocket} from "./services/game/socketService";
 import cors from 'cors';
 
 const app = express();
@@ -22,10 +23,11 @@ app.get('/api', (req, res) => {
     res.json('test');
 });
 
-io.on('connection', (socket) => {
-    console.log('a user connected');
-
-    socket.on('test', (arg) => {
-        console.log(`Test: ${JSON.stringify(arg)}`);
-    });
-});
+// io.on('connection', (socket) => {
+//     console.log('a user connected');
+//
+//     socket.on('test', (arg) => {
+//         console.log(`Test: ${JSON.stringify(arg)}`);
+//     });
+// });
+setupSocket(io);
