@@ -1,16 +1,15 @@
 import './App.css';
-import { io } from 'socket.io-client';
 import { useState, useEffect, createContext } from 'react';
 import setUserCookie from './helper/setUserCookie';
 import Router from './components/Router';
 import WelcomeOverlay from './components/WelcomeOverlay';
 
-export const socket = io();
-export const UserContext = createContext({});
+export const GlobalContext = createContext({});
 
 function App() {
     const [isLoading, setIsLoading] = useState(true);
     const [username, setUsername] = useState('');
+    const [message, setMessage] = useState('');
 
     useEffect(() => {
         setUserCookie();
@@ -23,12 +22,15 @@ function App() {
     }, []);
 
     return (
-        <UserContext.Provider value={{ username, setUsername, isLoading }}>
+        <GlobalContext.Provider
+            value={{ username, setUsername, isLoading, setMessage }}
+        >
             <div className='App'>
+                {message}
                 {username && <Router />}
                 {!isLoading && !username && <WelcomeOverlay />}
             </div>
-        </UserContext.Provider>
+        </GlobalContext.Provider>
     );
 }
 

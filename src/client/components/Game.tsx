@@ -1,24 +1,37 @@
-import { useParams } from 'react-router';
-import { useEffect } from 'react';
-import axios from 'axios';
-import { socket } from '../App';
+import { useParams, useNavigate } from 'react-router';
+import { useEffect, useState, useContext } from 'react';
+import { socket } from '../helper/socketHandler';
+import { GlobalContext } from '../App';
 
 function Game() {
+    const { setMessage } = useContext(GlobalContext);
     const { gameId } = useParams();
+    const navigate = useNavigate();
+    const [permissionReceived, setPermissionReceived] = useState(false);
+    const [gameData, setGameData] = useState({});
 
     useEffect(() => {
-        // async function requestJoining() {
-        //     const response = await axios.get(`/api/${gameId}`);
-
-        // }
         socket.emit('join-game', gameId);
-        socket.on('join-response', (message) => {
-            console.log(message);
+        socket.on('join-response', (response) => {
+            const { isPermitted, gameData } = response;
+            if (isPermitted) {
+                setPermissionReceived(true);
+                setGameData(gameData);
+            } else {
+                setMessage('Could not join game');
+                navigate('/');
+            }
         });
     }, []);
 
-    console.log(gameId);
-    return <div>You're in the game! Game ID: {gameId}</div>;
+    return permissionReceived ? (
+        <div>
+            <h2>You're in the game! Game ID: {gameId}</h2>
+            <p>Status: {gameData.status}</p>
+        </div>
+    ) : (
+        <div>Joining...</div>
+    );
 }
 
 export default Game;

@@ -7,27 +7,27 @@ const app = express();
 
 const mockGameList = [
     {
-        id: Math.floor(Math.random() * 500000).toString(36),
+        id: Date.now().toString(36) + Math.floor(Math.random() * 1000),
         numberOfPlayer: Math.floor(Math.random() * 3),
         gameStatus: 'open',
     },
     {
-        id: Math.floor(Math.random() * 500000).toString(36),
+        id: Date.now().toString(36) + Math.floor(Math.random() * 1000),
         numberOfPlayer: Math.floor(Math.random() * 3),
         gameStatus: 'open',
     },
     {
-        id: Math.floor(Math.random() * 500000).toString(36),
+        id: Date.now().toString(36) + Math.floor(Math.random() * 1000),
         numberOfPlayer: Math.floor(Math.random() * 3),
         gameStatus: 'open',
     },
     {
-        id: Math.floor(Math.random() * 500000).toString(36),
+        id: Date.now().toString(36) + Math.floor(Math.random() * 1000),
         numberOfPlayer: Math.floor(Math.random() * 3),
         gameStatus: 'open',
     },
     {
-        id: Math.floor(Math.random() * 500000).toString(36),
+        id: Date.now().toString(36) + Math.floor(Math.random() * 1000),
         numberOfPlayer: Math.floor(Math.random() * 3),
         gameStatus: 'open',
     },
@@ -59,6 +59,24 @@ io.on('connection', (socket) => {
     console.log('a user connected');
 
     socket.on('join-game', (gameId) => {
-        io.to(socket.id).emit('join-response', 'success');
+        setTimeout(() => {
+            const gameData = {
+                players: [1, 2, 3, 4],
+                round: 1,
+                status: 'started',
+            };
+
+            if (true) {
+                io.to(socket.id).emit('join-response', {
+                    isPermitted: true,
+                    gameData,
+                });
+            } else {
+                io.to(socket.id).emit('join-response', {
+                    isPermitted: false,
+                    gameData: null,
+                });
+            }
+        }, 1000);
     });
 });

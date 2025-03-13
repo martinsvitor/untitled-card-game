@@ -1,10 +1,10 @@
 import { useContext } from 'react';
 import { Link } from 'react-router';
-import { UserContext } from '../App';
+import { GlobalContext } from '../App';
 import UsernameInput from './UsernameInput';
 
 function Landingpage() {
-    const { username, setUsername, isLoading } = useContext(UserContext);
+    const { username, setUsername, isLoading } = useContext(GlobalContext);
 
     return (
         <div>

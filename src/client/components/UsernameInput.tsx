@@ -1,12 +1,12 @@
 import { useState, useContext, Dispatch, SetStateAction } from 'react';
-import { UserContext } from '../App';
+import { GlobalContext } from '../App';
 
 interface Prop {
     setUsername: Dispatch<SetStateAction<string>>;
 }
 
 function UsernameInput() {
-    const { setUsername } = useContext(UserContext);
+    const { setUsername } = useContext(GlobalContext);
 
     const [usernameInput, setUsernameInput] = useState('');
 
