@@ -8,20 +8,17 @@ export class GameEngine {
     private players: Player[] = [];
     private activePlayerId = '';
     readonly maxTurnLength: number;
-    private turnTimerId: ReturnType<typeof setTimeout>;
     private partialHighScores: HighScoreType[] = [];
-    public gameId: string;
+    public id: string;
     public cardsOnTable: CardItem[] = [];
     public currentRound: number;
     public cardsLeft: number;
     public gameWinner: string = '';
 
     constructor(private maxPlayers: number = 4, turnLength = 15) {
-        this.gameId = Date.now().toString(36);
+        this.id = Date.now().toString(36);
         this.currentRound = 0;
         this.maxTurnLength = turnLength * 1000;
-        this.turnTimerId = setTimeout(() => {
-        }, this.maxTurnLength);
         this.cardsLeft = 56;
     }
 
@@ -138,10 +135,6 @@ export class GameEngine {
 
     private startPlayerAction(player: Player) {
         this.activePlayerId = player.id;
-        this.turnTimerId = setTimeout(() => {
-            this.endPlayerAction(player, true)
-            return;
-        }, 15000);
     }
 
     public getNewCard(player: Player) {
@@ -162,11 +155,7 @@ export class GameEngine {
         this.endPlayerAction(player);
     }
 
-    private endPlayerAction(currentPlayer: Player, timeout = false) {
-        if (!timeout) {
-            clearTimeout(this.turnTimerId);
-        }
-
+    private endPlayerAction(currentPlayer: Player) {
         currentPlayer.state = 'played';
         const waitingPlayers = this.players.filter(player => player.state === 'waiting');
 
