@@ -14,12 +14,15 @@ export class GameEngine {
     public currentRound: number;
     public cardsLeft: number;
     public gameWinner: string = '';
+    public maxPlayers: number;
+    public numberOfPlayers = 0;
 
-    constructor(private maxPlayers: number = 4, turnLength = 15) {
+    constructor(maxPlayers = 4, turnLength = 15) {
         this.id = Date.now().toString(36);
         this.currentRound = 0;
         this.maxTurnLength = turnLength * 1000;
         this.cardsLeft = 56;
+        this.maxPlayers = maxPlayers;
     }
 
     private initDeck() {
@@ -78,6 +81,7 @@ export class GameEngine {
             throw new Error("Maximum number of players reached");
         }
         this.players.push(player);
+        this.numberOfPlayers++;
         if (this.players.find((player) => player.state === 'active')) {
             player.state = 'waiting';
         } else {

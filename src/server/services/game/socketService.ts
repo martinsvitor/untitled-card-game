@@ -8,17 +8,17 @@ const {createGame, getGame} = useGameState()
 export const setupSocket = (io: Server) => {
     // When the player gets to the game selection room
     io.on("connection", (socket: Socket) => {
-        io.to(socket.id).emit("connectionEstablished", socket.id);
+        // io.emit("connection-established", socket.id);
+        socket.emit('connection-established');
 
         socket.on('create-game', (maxPlayers: number) => {
             // When the player creates a game
             const game = new GameEngine(maxPlayers);
             createGame(game);
-            console.log('received createGame', maxPlayers);
-            socket.emit('new-game', game);
+            io.emit('new-game', game);
         })
 
-        socket.on("player-join", (gameId: string, playerId: string, playerName: string) => {
+        socket.on("join-game", (gameId: string, playerId: string, playerName: string) => {
             console.log('Player joined', playerId, playerName);
             const chosenGame = getGame(gameId);
             if (!chosenGame) {
@@ -27,7 +27,7 @@ export const setupSocket = (io: Server) => {
             }
             const player = new Player(playerId, playerName);
             chosenGame.addPlayer(player);
-            socket.emit("new-player", playerName); // Notify other players
+            io.emit("new-player", chosenGame); // Notify other players
         });
 
         socket.on("disconnect", () => {
