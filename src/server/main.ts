@@ -1,11 +1,7 @@
 import express from 'express';
 import ViteExpress from 'vite-express';
 import { Server } from 'socket.io';
-<<<<<<< HEAD
-import {setupSocket} from "./services/game/socketService";
-=======
 import { setupSocket } from './services/game/socketService';
->>>>>>> feature/backend/socketService
 import cors from 'cors';
 
 const app = express();
@@ -63,37 +59,3 @@ app.get('/api', (req, res) => {
 //     });
 // });
 setupSocket(io);
-<<<<<<< HEAD
-=======
-
-app.get('/api/games', (req, res) => {
-    console.log(req.headers.cookie);
-    res.json(mockGameList);
-});
-
-// io.on('connection', (socket) => {
-//     console.log('a user connected');
-
-//     socket.on('join-game', (gameId) => {
-//         setTimeout(() => {
-//             const gameData = {
-//                 players: [1, 2, 3, 4],
-//                 round: 1,
-//                 status: 'started',
-//             };
-
-//             if (true) {
-//                 io.to(socket.id).emit('join-response', {
-//                     isPermitted: true,
-//                     gameData,
-//                 });
-//             } else {
-//                 io.to(socket.id).emit('join-response', {
-//                     isPermitted: false,
-//                     gameData: null,
-//                 });
-//             }
-//         }, 1000);
-//     });
-// });
->>>>>>> feature/backend/socketService
