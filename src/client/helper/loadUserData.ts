@@ -7,6 +7,7 @@ async function loadUserData() {
         return userData;
     } catch (error) {
         console.log(error);
+        return error;
     }
 }
 

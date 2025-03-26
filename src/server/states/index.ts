@@ -22,10 +22,15 @@ export function useGameState() {
         return gameList.find(game => game.id === gameId);
     }
 
+    function getAllGames() {
+        return gameList;
+    }
+
     return {
         createGame,
         removeGame,
         getGame,
+        getAllGames
     }
 }
 
