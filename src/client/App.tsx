@@ -9,10 +9,11 @@ export const GlobalContext = createContext({});
 function App() {
     const [isLoading, setIsLoading] = useState(true);
     const [username, setUsername] = useState('');
+    const [userId, setUserId] = useState('');
     const [message, setMessage] = useState('');
 
     useEffect(() => {
-        setUserCookie();
+        setUserId(setUserCookie());
         const savedUsername = localStorage.getItem('username');
         if (savedUsername) {
             setUsername(savedUsername);
@@ -23,7 +24,7 @@ function App() {
 
     return (
         <GlobalContext.Provider
-            value={{ username, setUsername, isLoading, setMessage }}
+            value={{ userId, username, setUsername, isLoading, setMessage }}
         >
             <div className='App'>
                 {message}

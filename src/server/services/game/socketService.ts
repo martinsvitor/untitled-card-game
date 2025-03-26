@@ -11,11 +11,12 @@ export const setupSocket = (io: Server) => {
         // io.emit("connection-established", socket.id);
         socket.emit('connection-established');
 
-        socket.on('create-game', (maxPlayers: number) => {
+        socket.on('create-game', (maxPlayers: number | undefined) => {
             // When the player creates a game
             const game = new GameEngine(maxPlayers);
             createGame(game);
             io.emit('new-game', game);
+            socket.emit('game-created', game.id);
         });
 
         socket.on(
@@ -24,12 +25,28 @@ export const setupSocket = (io: Server) => {
                 console.log('Player joined', playerId, playerName);
                 const chosenGame = getGame(gameId);
                 if (!chosenGame) {
-                    socket.emit('game-not-found');
+                    socket.emit('join-response', {
+                        isPermitted: false,
+                        message: 'Game not found',
+                    });
+                    return;
+                }
+                if (chosenGame.numberOfPlayers >= chosenGame.maxPlayers) {
+                    socket.emit('join-response', {
+                        isPermitted: false,
+                        message: 'Game already full',
+                    });
                     return;
                 }
                 const player = new Player(playerId, playerName);
                 chosenGame.addPlayer(player);
                 io.emit('new-player', chosenGame); // Notify other players
+
+                socket.emit('join-response', {
+                    isPermitted: true,
+                    message: 'Joining successful',
+                    gameData: chosenGame,
+                });
             }
         );
 

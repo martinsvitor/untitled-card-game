@@ -4,33 +4,33 @@ import { socket } from '../helper/socketHandler';
 import { GlobalContext } from '../App';
 
 function Game() {
-    const { setMessage } = useContext(GlobalContext);
+    const { setMessage, userId, username } = useContext(GlobalContext);
     const { gameId } = useParams();
     const navigate = useNavigate();
-    const [permissionReceived, setPermissionReceived] = useState(false);
+    const [waitingForResponse, setWaitingForResponse] = useState(true);
     const [gameData, setGameData] = useState({});
 
     useEffect(() => {
-        socket.emit('join-game', gameId);
+        socket.emit('join-game', gameId, userId, username);
         socket.on('join-response', (response) => {
-            const { isPermitted, gameData } = response;
+            const { isPermitted, message, gameData } = response;
             if (isPermitted) {
-                setPermissionReceived(true);
+                setWaitingForResponse(false);
                 setGameData(gameData);
             } else {
-                setMessage('Could not join game');
+                setMessage(message);
                 navigate('/');
             }
         });
     }, []);
 
-    return permissionReceived ? (
+    return waitingForResponse ? (
+        <div>Joining...</div>
+    ) : (
         <div>
             <h2>You're in the game! Game ID: {gameId}</h2>
-            <p>Status: {gameData.status}</p>
+            <p>Players: {gameData?.numberOfPlayers}</p>
         </div>
-    ) : (
-        <div>Joining...</div>
     );
 }
 
