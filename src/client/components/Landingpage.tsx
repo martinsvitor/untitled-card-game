@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {io} from "socket.io-client";
 import {useEffect, useState} from "react";
 import {GameEngine} from "../../server/game/gameEngine";
@@ -39,6 +40,25 @@ function Landingpage() {
                     : <p> no games created </p>
             }
         </div>);
+=======
+import { useContext } from 'react';
+import { Link } from 'react-router';
+import { GlobalContext } from '../App';
+import UsernameInput from './UsernameInput';
+
+function Landingpage() {
+    const { username, setUsername, isLoading } = useContext(GlobalContext);
+
+    return (
+        <div>
+            {!username ? 'Hello!' : `Hello ${username}!`}
+            {!username && !isLoading && (
+                <UsernameInput setUsername={setUsername} />
+            )}
+            <Link to='/games'>Get a room!</Link>
+        </div>
+    );
+>>>>>>> feature/backend/socketService
 }
 
 export default Landingpage;

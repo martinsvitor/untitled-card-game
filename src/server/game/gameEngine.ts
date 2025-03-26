@@ -17,8 +17,13 @@ export class GameEngine {
     public maxPlayers: number;
     public numberOfPlayers = 0;
 
+<<<<<<< HEAD
     constructor(maxPlayers = 4, turnLength = 15) {
         this.id = Date.now().toString(36);
+=======
+    constructor(private maxPlayers: number = 4, turnLength = 15) {
+        this.gameId = Date.now().toString(36);
+>>>>>>> feature/backend/socketService
         this.currentRound = 0;
         this.maxTurnLength = turnLength * 1000;
         this.cardsLeft = 56;
