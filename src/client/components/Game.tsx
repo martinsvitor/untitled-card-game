@@ -1,27 +1,45 @@
-import { useParams, useNavigate } from 'react-router';
-import { useEffect, useState, useContext } from 'react';
-import { socket } from '../helper/socketHandler';
-import { GlobalContext } from '../App';
+import {useParams, useNavigate} from 'react-router';
+import {useEffect, useState, useContext} from 'react';
+import {socket} from '../helper/socketHandler';
+import {GlobalContext} from '../App';
+import React from 'react';
+import {GameEngine} from '../../server/game/gameEngine';
 
 function Game() {
-    const { setMessage, userId, username } = useContext(GlobalContext);
-    const { gameId } = useParams();
+    const {setMessage, userId, username} = useContext(GlobalContext);
+    const {gameId} = useParams();
     const navigate = useNavigate();
     const [waitingForResponse, setWaitingForResponse] = useState(true);
-    const [gameData, setGameData] = useState({});
+    const [gameState, setGameState] = useState<GameEngine>();
 
     useEffect(() => {
         socket.emit('join-game', gameId, userId, username);
         socket.on('join-response', (response) => {
-            const { isPermitted, message, gameData } = response;
+            const {isPermitted, message, gameData} = response;
+
             if (isPermitted) {
                 setWaitingForResponse(false);
-                setGameData(gameData);
+                setGameState(gameData);
             } else {
                 setMessage(message);
                 navigate('/');
             }
         });
+        socket.on('game-update', (updatedGame: GameEngine) => {
+            setGameState(updatedGame);
+        });
+
+        // socket.on('change-ready', (playerStatus: PlayerState) => {
+        //     const currentPlayer = gameState?.getCurrentPlayers().find(player => player.id === userId);
+        //     if (currentPlayer) {
+        //         currentPlayer.state = playerStatus;
+        //     }
+        // })
+
+        return () => {
+            socket.removeAllListeners();
+        }
+
     }, []);
 
     return waitingForResponse ? (
@@ -29,7 +47,18 @@ function Game() {
     ) : (
         <div>
             <h2>You're in the game! Game ID: {gameId}</h2>
-            <p>Players: {gameData?.numberOfPlayers}</p>
+            <p>Players: {gameState?.numberOfPlayers}</p>
+
+
+            {/*<button onClick={() => {*/}
+            {/*    setPlayerReady(true);*/}
+            {/*    socket.emit('change-ready', {*/}
+            {/*        gameId: gameId,*/}
+            {/*        playerId: userId,*/}
+            {/*        isPlayerReady,*/}
+            {/*    });*/}
+            {/*}}>Ready*/}
+            {/*</button>*/}
         </div>
     );
 }
