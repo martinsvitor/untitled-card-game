@@ -1,10 +1,20 @@
 import './App.css';
-import { useState, useEffect, createContext } from 'react';
+import {useState, useEffect, createContext} from 'react';
 import setUserCookie from './helper/setUserCookie';
 import Router from './components/Router';
 import WelcomeOverlay from './components/WelcomeOverlay';
+import {AppContext} from './types';
+import React from 'react';
 
-export const GlobalContext = createContext({});
+export const GlobalContext = createContext<AppContext>({
+    userId: '',
+    username: '',
+    setUsername: () => {
+    },
+    setMessage: () => {
+    },
+    isLoading: true
+});
 
 function App() {
     const [isLoading, setIsLoading] = useState(true);
@@ -24,12 +34,12 @@ function App() {
 
     return (
         <GlobalContext.Provider
-            value={{ userId, username, setUsername, isLoading, setMessage }}
+            value={{userId, username, setUsername, isLoading, setMessage}}
         >
             <div className='App'>
                 {message}
-                {username && <Router />}
-                {!isLoading && !username && <WelcomeOverlay />}
+                {username && <Router/>}
+                {!isLoading && !username && <WelcomeOverlay/>}
             </div>
         </GlobalContext.Provider>
     );

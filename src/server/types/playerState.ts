@@ -1,1 +1,1 @@
-export type PlayerState = "active" | "played" | "waiting";
+export type PlayerState = "active" | "played" | "waiting" | "ready";

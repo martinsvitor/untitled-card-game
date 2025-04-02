@@ -1,9 +1,9 @@
-import { Server, Socket } from 'socket.io';
-import { GameEngine } from '../../game/gameEngine';
-import { Player } from '../../game/playerClass';
-import { useGameState } from '../../states';
+import {Server, Socket} from 'socket.io';
+import {GameEngine} from '../../game/gameEngine';
+import {Player} from '../../game/playerClass';
+import {useGameState} from '../../states';
 
-const { createGame, getGame } = useGameState();
+const {createGame, getGame, getAllGames} = useGameState();
 
 export const setupSocket = (io: Server) => {
     // When the player gets to the game selection room
@@ -15,9 +15,14 @@ export const setupSocket = (io: Server) => {
             // When the player creates a game
             const game = new GameEngine(maxPlayers);
             createGame(game);
-            io.emit('new-game', game);
+            io.emit('game-list-update', game);
             socket.emit('game-created', game.id);
         });
+
+        socket.on('get-game-list', () => {
+            const gameList = getAllGames();
+            io.emit('game-list', gameList);
+        })
 
         socket.on(
             'join-game',
@@ -40,6 +45,7 @@ export const setupSocket = (io: Server) => {
                 }
                 const player = new Player(playerId, playerName);
                 chosenGame.addPlayer(player);
+                socket.join(gameId)
                 io.emit('new-player', chosenGame); // Notify other players
 
                 socket.emit('join-response', {
@@ -47,13 +53,26 @@ export const setupSocket = (io: Server) => {
                     message: 'Joining successful',
                     gameData: chosenGame,
                 });
+                io.to(gameId).emit('game-update', chosenGame);
             }
         );
+
+        // socket.on('change-ready', (gameId: string, playerId: string, isPlayerReady: boolean) => {
+        //     const currentGame = getGame(gameId);
+        //     const currentPlayer = currentGame?.getCurrentPlayers().find((player: Player) => player.id === playerId)
+        //     if (currentPlayer) {
+        //         if (isPlayerReady) {
+        //             currentPlayer.state = 'ready';
+        //             io.to(gameId).emit('change-ready', currentPlayer.state );
+        //         } else {
+        //             currentPlayer.state = 'waiting';
+        //         }
+        //     }
+        // })
 
         console.log(`User connected: ${socket.id}`);
         // console.log('!!!! IO ',io.sockets);
         // io.to(socket.id).emit("connectionEstablished", io);
-        socket.emit('testConnection');
 
         // socket.on('createGame', (maxPlayers: number) => {
         //     // When the player creates a game
