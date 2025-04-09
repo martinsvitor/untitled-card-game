@@ -4,6 +4,7 @@ import {socket} from '../helper/socketHandler';
 import {GlobalContext} from '../App';
 import React from 'react';
 import {GameEngine} from '../../server/game/gameEngine';
+import {JoinResponse} from '../types';
 
 function Game() {
     const {setMessage, userId, username} = useContext(GlobalContext);
@@ -13,8 +14,7 @@ function Game() {
     const [gameState, setGameState] = useState<GameEngine>();
 
     useEffect(() => {
-        socket.emit('join-game', gameId, userId, username);
-        socket.on('join-response', (response) => {
+        socket.emit('join-game', gameId, userId, username, (response: JoinResponse) => {
             const {isPermitted, message, gameData} = response;
 
             if (isPermitted) {
@@ -25,6 +25,7 @@ function Game() {
                 navigate('/');
             }
         });
+
         socket.on('game-update', (updatedGame: GameEngine) => {
             setGameState(updatedGame);
         });
