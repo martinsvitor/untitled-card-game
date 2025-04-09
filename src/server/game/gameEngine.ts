@@ -5,7 +5,7 @@ import { HighScoreType } from '../types/highScoreType.js';
 
 export class GameEngine {
     private deck: CardItem[] = [];
-    private players: Player[] = [];
+    public players: Player[] = [];
     private activePlayerId = '';
     readonly maxTurnLength: number;
     private partialHighScores: HighScoreType[] = [];

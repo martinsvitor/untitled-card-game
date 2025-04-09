@@ -9,23 +9,23 @@ function GameList() {
 
     const [games, setGames] = useState<GameEngine[]>([]);
 
-    useEffect(() => {
-        socket.emit('get-game-list');
+    const createGame = () => {
+        socket.emit('create-game', (response: string) => {
+            navigate(`/${response}`);
+        })
+    };
 
-        socket.on('game-created', (gameId: string) => {
-            navigate(`/${gameId}`);
+    useEffect(() => {
+        socket.emit('get-game-list', (gameList: GameEngine[]) => {
+            setGames(gameList);
         });
 
         socket.on('game-list-update', (game: GameEngine) => {
-            setGames([
-                ...games,
+            setGames((previousList) => [
+                ...previousList.filter(existingGame => existingGame.id !== game.id),
                 game
             ]);
         });
-
-        socket.on('game-list', (gameList : GameEngine[]) => {
-            setGames(gameList);
-        })
 
         return () => {
             socket.removeAllListeners();
@@ -34,10 +34,10 @@ function GameList() {
 
     function displayList(games: GameEngine[]) {
         return games?.map((game) => {
-            const {id} = game;
+            const {id, players} = game;
             return (
                 <li key={id}>
-                    <Link to={id}>{id}</Link>
+                    <Link to={id}>{id} / {players.length}</Link>
                 </li>
             );
         });
@@ -46,7 +46,7 @@ function GameList() {
     return (
         <div>
             GameList
-            <button onClick={() => socket.emit('create-game')}>
+            <button onClick={createGame}>
                 Create game
             </button>
             <ul>{displayList(games)}</ul>

@@ -2,57 +2,56 @@ import {Server, Socket} from 'socket.io';
 import {GameEngine} from '../../game/gameEngine';
 import {Player} from '../../game/playerClass';
 import {useGameState} from '../../states';
+import {JoinResponse} from '../../types/socketResponseTypes';
 
 const {createGame, getGame, getAllGames} = useGameState();
 
 export const setupSocket = (io: Server) => {
     // When the player gets to the game selection room
     io.on('connection', (socket: Socket) => {
-        // io.emit("connection-established", socket.id);
-        socket.emit('connection-established');
-
-        socket.on('create-game', (maxPlayers: number | undefined) => {
+        socket.on('create-game', (respond: (gameId: string) => {}) => {
             // When the player creates a game
-            const game = new GameEngine(maxPlayers);
+            const game = new GameEngine();
             createGame(game);
-            io.emit('game-list-update', game);
-            socket.emit('game-created', game.id);
+            respond(game.id);
         });
 
-        socket.on('get-game-list', () => {
+        socket.on('get-game-list', (respond: (gameList: GameEngine[]) => {}) => {
             const gameList = getAllGames();
-            io.emit('game-list', gameList);
+            respond(gameList);
         })
 
         socket.on(
             'join-game',
-            (gameId: string, playerId: string, playerName: string) => {
+            (gameId: string, playerId: string, playerName: string, respond: (data: JoinResponse) => {}) => {
                 console.log('Player joined', playerId, playerName);
                 const chosenGame = getGame(gameId);
                 if (!chosenGame) {
-                    socket.emit('join-response', {
+                    return respond({
                         isPermitted: false,
-                        message: 'Game not found',
+                        message: 'Game not found'
                     });
-                    return;
                 }
                 if (chosenGame.numberOfPlayers >= chosenGame.maxPlayers) {
-                    socket.emit('join-response', {
+                    return respond({
                         isPermitted: false,
-                        message: 'Game already full',
+                        message: 'Game already full'
                     });
-                    return;
                 }
                 const player = new Player(playerId, playerName);
                 chosenGame.addPlayer(player);
                 socket.join(gameId)
-                io.emit('new-player', chosenGame); // Notify other players
 
-                socket.emit('join-response', {
+                // Notify other players
+                io.emit('game-list-update', chosenGame);
+
+                respond({
                     isPermitted: true,
                     message: 'Joining successful',
                     gameData: chosenGame,
                 });
+
+                // Notifying all players in the same Game Room
                 io.to(gameId).emit('game-update', chosenGame);
             }
         );
@@ -71,42 +70,6 @@ export const setupSocket = (io: Server) => {
         // })
 
         console.log(`User connected: ${socket.id}`);
-        // console.log('!!!! IO ',io.sockets);
-        // io.to(socket.id).emit("connectionEstablished", io);
-
-        // socket.on('createGame', (maxPlayers: number) => {
-        //     // When the player creates a game
-        //     const game = new GameEngine(maxPlayers);
-        //     socket.emit('newGame', game);
-        //
-        //     socket.on("playerJoin", (playerData: Player) => {
-        //         if (game.getCurrentPlayers().length > maxPlayers) {
-        //             io.to(socket.id).emit('fullRoom');
-        //         } else {
-        //             const player = new Player(playerData.id, playerData.name);
-        //             game.addPlayer(player);
-        //             console.log(`Player joined:`, playerData);
-        //
-        //             socket.emit("newPlayer", playerData); // Notify other players
-        //         }
-        //     });
-        //
-        //     socket.on('startGame', () => {
-        //         if (game.getCurrentPlayers().length < 2) {
-        //             console.log('Not enough players');
-        //             socket.emit("game started");
-        //         } else {
-        //             game.startGame();
-        //             console.log('Starting the game');
-        //             socket.emit("game started");
-        //         }
-        //     })
-        //
-        //     socket.on("gameAction", (data) => {
-        //         console.log("Game action received:", data);
-        //         io.emit("gameUpdate", {status: "updated", data});
-        //     });
-        // })
 
         socket.on('disconnect', () => {
             console.log(`User disconnected: ${socket.id}`);
