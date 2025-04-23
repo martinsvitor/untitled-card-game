@@ -1,7 +1,8 @@
-import { CardItem } from '../types/cardItem.js';
-import { Player } from './playerClass';
-import { CardType } from '../types/cardType.js';
-import { HighScoreType } from '../types/highScoreType.js';
+import {CardItem} from '../types/cardItem.js';
+import {Player} from './playerClass';
+import {CardType} from '../types/cardType.js';
+import {HighScoreType} from '../types/highScoreType.js';
+import {ResponseMessage} from '../types/responseMessage';
 
 export class GameEngine {
     private deck: CardItem[] = [];
@@ -12,7 +13,6 @@ export class GameEngine {
     public id: string;
     public cardsOnTable: CardItem[] = [];
     public currentRound: number;
-    public cardsLeft: number;
     public gameWinner: string = '';
     public maxPlayers: number;
     public numberOfPlayers = 0;
@@ -21,7 +21,6 @@ export class GameEngine {
         this.id = Date.now().toString(36);
         this.currentRound = 0;
         this.maxTurnLength = turnLength * 1000;
-        this.cardsLeft = 56;
         this.maxPlayers = maxPlayers;
     }
 
@@ -46,16 +45,12 @@ export class GameEngine {
                 case CardType.Diamonds:
                     modifier = 0.1;
                     break;
-                default:
-                    throw new Error(`Invalid deck type: ${cardTypes[i]}`);
             }
             for (let j = 0; j < cardValues.length / 4; j++) {
                 const singleCardValue = cardValues[j % 14] + modifier;
-                this.deck.push({ type: cardTypes[i], value: singleCardValue });
+                this.deck.push({type: cardTypes[i], value: singleCardValue});
             }
         }
-
-        this.cardsLeft = this.deck.length;
         this.shuffleDeck();
     }
 
@@ -64,27 +59,34 @@ export class GameEngine {
     }
 
     private dealCards(cardsPerPlayer: number) {
-        if (this.deck.length < cardsPerPlayer * this.players.length) {
-            throw new Error('Not enough cards in the deck');
+        if (this.deck.length < this.players.length) {
+            console.warn('No enough cards left in the deck.');
+            return;
         }
         for (const player of this.players) {
             if (player.state === 'played') {
                 continue;
             }
             player.hand = this.deck.splice(0, cardsPerPlayer);
-            this.cardsLeft -= cardsPerPlayer;
         }
     }
 
-    public addPlayer(player: Player) {
+    public addPlayer(player: Player) : ResponseMessage {
         if (this.players.length >= this.maxPlayers) {
-            throw new Error('Maximum number of players reached');
+            return {
+                success: false,
+                message: 'Game is full.'
+            };
         }
+
         const isDuplicatePlayer = this.players.some(
             (existingPlayer) => existingPlayer.id === player.id
         );
         if (isDuplicatePlayer) {
-            return;
+            return {
+                success: false,
+                message: 'The player is already in the game.'
+            };
         }
         this.players.push(player);
         this.numberOfPlayers++;
@@ -94,28 +96,39 @@ export class GameEngine {
             player.state = 'active';
             this.activePlayerId = player.id;
         }
+        return {
+            success: true,
+            message: 'Player successfully added'
+        }
     }
 
-    public startGame() {
+    public startGame(): ResponseMessage {
         if (this.currentRound !== 0) {
-            throw new Error('Game is already underway');
+            return {
+                success: false,
+                message: 'Game is already running'
+            }
         }
 
         if (this.players.length <= 1) {
-            throw new Error('Not enough players to start the game');
+            return {
+                success: false,
+                message: 'Not enough players to start the game'
+            }
         }
 
         const currentPlayer = this.players.find(
             (player) => player.id === this.activePlayerId
         );
-        if (!currentPlayer) {
-            throw new Error('No players to start the game');
-        }
 
         this.initDeck();
         this.dealCards(6);
         this.cardsOnTable = [];
-        this.startRound(currentPlayer);
+        this.startRound(currentPlayer!);
+        return {
+            success: true,
+            message: 'Starting game'
+        };
     }
 
     public startRound(player: Player) {
@@ -131,15 +144,13 @@ export class GameEngine {
         }
 
         this.players.forEach((player: Player) => {
-            if (this.deck.length) {
-                if (player.hand.length < 6) {
-                    this.getNewCard(player);
-                }
+            if (player.hand.length < 6) {
+                this.getNewCard(player);
             }
         });
 
         if (player.state !== 'active') {
-            throw new Error("This is not this players' action");
+            return;
         }
         this.startPlayerAction(player);
     }
@@ -149,16 +160,15 @@ export class GameEngine {
     }
 
     public getNewCard(player: Player) {
-        if (!this.deck.length) {
-            throw new Error('No more cards on the deck');
-        }
         player.hand.push(this.deck.shift()!);
-        this.cardsLeft--;
     }
 
-    public playCard(player: Player, cardPlayed: CardItem) {
+    public playCard(player: Player, cardPlayed: CardItem): ResponseMessage {
         if (this.activePlayerId !== player.id) {
-            throw new Error("This is not this players' action");
+            return {
+                success: false,
+                message: 'This is not this players\' action'
+            };
         }
         console.log(
             `${player.name} played ${cardPlayed.value} of ${cardPlayed.type}`
@@ -166,6 +176,10 @@ export class GameEngine {
 
         this.cardsOnTable.push(cardPlayed);
         this.endPlayerAction(player);
+        return {
+            success: true,
+            message: `${player.name} played ${cardPlayed.value} of ${cardPlayed.type}`
+        }
     }
 
     private endPlayerAction(currentPlayer: Player) {
@@ -210,9 +224,6 @@ export class GameEngine {
     public finishRound() {
         const roundResult = this.computeRoundWinner();
         this.partialHighScores = this.computeHighScores();
-        if (roundResult.length < 1) {
-            throw new Error('No round result');
-        }
 
         if (this.deck.length) {
             const currentPlayer = this.players.find(

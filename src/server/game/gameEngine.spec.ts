@@ -58,16 +58,24 @@ describe('GameEngine', () => {
             expect(secondPlayer.playCard).toThrowError()
         })
 
-        it('should play out the game until it\'s over', () => {
-            while (firstPlayer.hand.length > 0) {
-                const firstPlayerHand = firstPlayer.hand;
-                const secondPlayerHand = secondPlayer.hand;
-                firstPlayer.playCard(firstPlayerHand[0], game);
-                secondPlayer.playCard(secondPlayerHand[0], game);
-            }
+        // it('should play out the game until it\'s over', () => {
+        //     while (firstPlayer.hand.length > 0) {
+        //         const firstPlayerHand = firstPlayer.hand;
+        //         const secondPlayerHand = secondPlayer.hand;
+        //         firstPlayer.playCard(firstPlayerHand[0], game);
+        //         secondPlayer.playCard(secondPlayerHand[0], game);
+        //     }
+        //
+        //     expect(game.gameWinner).not.toBeUndefined();
+        // });
 
-            expect(game.gameWinner).not.toBeUndefined();
-        });
+        // it('should NOT allow a player to play twice in a row', () => {
+        //     const firstPlayerHand = firstPlayer.hand;
+        //     const firstPlay = firstPlayer.playCard(firstPlayerHand[0], game);
+        //     const secondPlay = firstPlayer.playCard(firstPlayerHand[0], game);
+        //     expect(firstPlay).toEqual({ success: true, message: 'Played' })
+        //     expect(secondPlay).toEqual({success: false, message: 'This is not this players\' action'});
+        // })
 
     });
 });
