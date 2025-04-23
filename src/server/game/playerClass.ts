@@ -2,6 +2,7 @@ import {PlayerType} from "../types/playerType.js";
 import {CardItem} from "../types/cardItem.js";
 import {GameEngine} from "./gameEngine.js";
 import {PlayerState} from "../types/playerState.js";
+import {ResponseMessage} from '../types/responseMessage';
 
 export class Player implements PlayerType {
     collectedCards: CardItem[];
@@ -20,20 +21,30 @@ export class Player implements PlayerType {
         this.points = 0;
     }
 
-    public drawCard(card: CardItem | undefined) {
+    public drawCard(card: CardItem | undefined): ResponseMessage {
         if (!card) {
-            throw new Error("No cards to draw");
+            return {
+                success: false,
+                message: 'No cards in the deck'
+            };
         }
         this.hand.push(card);
+        return {
+            success: true,
+            message: 'Got new card'
+        };
     }
 
-    public playCard(cardToPlay: CardItem, game: GameEngine) {
+    public playCard(cardToPlay: CardItem, game: GameEngine): ResponseMessage {
         const cardIndex = this.hand.findIndex(
             (card) => card.type === cardToPlay.type && card.value === cardToPlay.value
         );
 
         if (cardIndex === -1) {
-            throw new Error('Card not found in hand');
+            return {
+                success: false,
+                message: 'No cards left in hand'
+            };
         }
 
         cardToPlay.playedBy = this.id;
@@ -41,7 +52,7 @@ export class Player implements PlayerType {
         this.hand.splice(cardIndex, 1);
 
         //     Notify the game of played card
-        game.playCard(this, cardToPlay);
+        return game.playCard(this, cardToPlay);
     }
 
     public winRound(cardsWon: CardItem[], points: number) {
