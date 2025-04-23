@@ -11,6 +11,7 @@ function Game() {
     const {gameId} = useParams();
     const navigate = useNavigate();
     const [waitingForResponse, setWaitingForResponse] = useState(true);
+    const [isPlayerReady, setPlayerReady] = useState(false);
     const [gameState, setGameState] = useState<GameEngine>();
 
     useEffect(() => {
@@ -30,13 +31,6 @@ function Game() {
             setGameState(updatedGame);
         });
 
-        // socket.on('change-ready', (playerStatus: PlayerState) => {
-        //     const currentPlayer = gameState?.getCurrentPlayers().find(player => player.id === userId);
-        //     if (currentPlayer) {
-        //         currentPlayer.state = playerStatus;
-        //     }
-        // })
-
         return () => {
             socket.removeAllListeners();
         }
@@ -51,15 +45,15 @@ function Game() {
             <p>Players: {gameState?.numberOfPlayers}</p>
 
 
-            {/*<button onClick={() => {*/}
-            {/*    setPlayerReady(true);*/}
-            {/*    socket.emit('change-ready', {*/}
-            {/*        gameId: gameId,*/}
-            {/*        playerId: userId,*/}
-            {/*        isPlayerReady,*/}
-            {/*    });*/}
-            {/*}}>Ready*/}
-            {/*</button>*/}
+            <button onClick={() => {
+                setPlayerReady(!isPlayerReady);
+                socket.emit('change-ready',
+                    gameId,
+                    userId,
+                    !isPlayerReady,
+                );
+            }}>Ready
+            </button>
         </div>
     );
 }
