@@ -3,6 +3,7 @@ import {Player} from './playerClass';
 import {CardType} from '../types/cardType.js';
 import {HighScoreType} from '../types/highScoreType.js';
 import {ResponseMessage} from '../types/responseMessage';
+import {GameDTO} from '../types/GameDTO';
 
 export class GameEngine {
     private deck: CardItem[] = [];
@@ -27,7 +28,7 @@ export class GameEngine {
     private initDeck() {
         const cardTypes = Object.keys(CardType) as CardType[];
         const cardValues: number[] = [];
-        for (let i = 0; i < 14 * cardTypes.length; i++) {
+        for (let i = 1; i < 13 * cardTypes.length; i++) {
             cardValues.push(i + 1);
         }
         for (let i = 0; i < cardTypes.length; i++) {
@@ -71,7 +72,7 @@ export class GameEngine {
         }
     }
 
-    public addPlayer(player: Player) : ResponseMessage {
+    public addPlayer(player: Player): ResponseMessage {
         if (this.players.length >= this.maxPlayers) {
             return {
                 success: false,
@@ -235,7 +236,10 @@ export class GameEngine {
             (player) => player.state === 'played'
         )!;
         this.cardsOnTable = [];
-        this.players.forEach((player) => (player.state = 'waiting'));
+        this.players.forEach((player) => {
+            player.state = 'waiting'
+            player.playedCard = null;
+        });
         nextPlayer.state = 'active';
         this.startRound(nextPlayer);
         return;
@@ -265,5 +269,19 @@ export class GameEngine {
 
     public getCurrentPlayers() {
         return this.players;
+    }
+
+    public toDTO(): GameDTO {
+        const {id, players, maxPlayers, numberOfPlayers, currentRound, cardsOnTable} = this;
+        const allPlayed = players.every(player => player.playedCard !== null)
+
+        return {
+            id,
+            players,
+            currentRound,
+            maxPlayers,
+            numberOfPlayers,
+            ...(allPlayed && cardsOnTable)
+        };
     }
 }
