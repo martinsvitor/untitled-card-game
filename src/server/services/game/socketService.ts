@@ -2,7 +2,9 @@ import {Server, Socket} from 'socket.io';
 import {GameEngine} from '../../game/gameEngine';
 import {Player} from '../../game/playerClass';
 import {useGameState} from '../../states';
-import {JoinResponse} from '../../types/socketResponseTypes';
+import {ActionResponse, JoinResponse} from '../../types/socketResponseTypes';
+import {CardItem} from '../../types/cardItem';
+import {GameSearchResult} from '../../types/GameHandlingTypes';
 
 const {createGame, getGame, getAllGames} = useGameState();
 
@@ -25,11 +27,11 @@ export const setupSocket = (io: Server) => {
                     'join-game',
                     (gameId: string, playerId: string, playerName: string, respond: (data: JoinResponse) => {}) => {
                         console.log('Player joined', playerId, playerName);
-                        const chosenGame = getGame(gameId);
-                        if (!chosenGame) {
+                        const chosenGame: GameSearchResult = getGame(gameId);
+                        if (!(chosenGame instanceof GameEngine)) {
                             return respond({
                                 isPermitted: false,
-                                message: 'Game not found'
+                                message: chosenGame.message
                             });
                         }
                         if (chosenGame.numberOfPlayers >= chosenGame.maxPlayers) {
@@ -58,7 +60,11 @@ export const setupSocket = (io: Server) => {
 
                 socket.on('change-ready', (gameId: string, playerId: string, isPlayerReady: boolean) => {
                     const currentGame = getGame(gameId);
-                    const currentPlayer = currentGame?.getCurrentPlayers().find((player: Player) => player.id === playerId)
+                    if (!(currentGame instanceof GameEngine)) {
+                        // Handle error
+                        return;
+                    }
+                    const currentPlayer = currentGame.getCurrentPlayers().find((player: Player) => player.id === playerId)
                     if (currentGame && currentPlayer) {
                         if (isPlayerReady) {
                             currentPlayer.state = 'ready';
@@ -66,10 +72,22 @@ export const setupSocket = (io: Server) => {
                         } else {
                             currentPlayer.state = 'waiting';
                         }
-                        const allReady = currentGame?.players.every(player => player.state === 'ready');
+                        const allReady = currentGame.players.every(player => player.state === 'ready');
                         if (currentGame.getCurrentPlayers().length > 1 && allReady) {
                             currentGame.startGame()
                         }
+                    }
+                });
+
+                socket.on('player-action', (gameId: string, playerId: string, card: CardItem, respond: (data: ActionResponse) => {}) => {
+                    const currentGame = getGame(gameId);
+                    if (!(currentGame instanceof GameEngine)) {
+                        return respond({response: {success: currentGame.success, message: currentGame.message}});
+                    }
+                    const currentPlayer = currentGame.players.find(player => player.id === playerId);
+                    if (currentPlayer) {
+                        const playerAction = currentPlayer.playCard(card, currentGame);
+                        respond({response: playerAction, gameData: currentGame.toDTO()})
                     }
                 })
 

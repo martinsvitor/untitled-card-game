@@ -4,9 +4,11 @@ import {GameEngine} from "./gameEngine.js";
 import {PlayerState} from "../types/playerState.js";
 import {ResponseMessage} from '../types/responseMessage';
 
+// TODO: Refactor everything to separate Player and Game classes
 export class Player implements PlayerType {
     collectedCards: CardItem[];
     hand: CardItem[];
+    playedCard: CardItem | null = null;
     id: string;
     name: string;
     state: PlayerState;
@@ -46,7 +48,7 @@ export class Player implements PlayerType {
                 message: 'No cards left in hand'
             };
         }
-
+        this.playedCard = cardToPlay;
         cardToPlay.playedBy = this.id;
         //     Remove the card from player's hand
         this.hand.splice(cardIndex, 1);
