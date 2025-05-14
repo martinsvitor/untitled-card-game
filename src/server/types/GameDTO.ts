@@ -7,5 +7,6 @@ export interface GameDTO {
     currentRound: number;
     maxPlayers: number;
     numberOfPlayers: number;
+    numberOfPlayedCards: number;
     cardsOnTable?: CardItem[];
 }

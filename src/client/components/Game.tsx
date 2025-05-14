@@ -3,9 +3,9 @@ import { useEffect, useState, useContext } from 'react';
 import { socket } from '../helper/socketHandler';
 import { GlobalContext } from '../App';
 import React from 'react';
-import { GameEngine } from '../../server/game/gameEngine';
-import { JoinResponse } from '../types';
 import GameTable from './GameTable';
+import { GameDTO } from '../../server/types/GameDTO';
+import { CustomResponse } from '../../server/types/socketResponseTypes';
 
 function Game() {
     const { setMessage, userId, username } = useContext(GlobalContext);
@@ -13,7 +13,8 @@ function Game() {
     const navigate = useNavigate();
     const [waitingForResponse, setWaitingForResponse] = useState(true);
     const [isPlayerReady, setPlayerReady] = useState(false);
-    const [gameState, setGameState] = useState<GameEngine>();
+    const [gameState, setGameState] = useState<GameDTO>();
+    const playerHand = gameState?.players.find(player => player.id === userId)?.hand;
 
     useEffect(() => {
         socket.emit(
@@ -21,10 +22,10 @@ function Game() {
             gameId,
             userId,
             username,
-            (response: JoinResponse) => {
-                const { isPermitted, message, gameData } = response;
+            (response: CustomResponse) => {
+                const { success, message, gameData } = response;
 
-                if (isPermitted) {
+                if (success) {
                     setWaitingForResponse(false);
                     setGameState(gameData);
                 } else {
@@ -34,8 +35,8 @@ function Game() {
             }
         );
 
-        socket.on('game-update', (updatedGame: GameEngine) => {
-            setGameState(updatedGame);
+        socket.on('game-update', (response: CustomResponse) => {
+            setGameState(response.gameData);
         });
 
         return () => {
@@ -58,7 +59,7 @@ function Game() {
             >
                 Ready
             </button>
-            <GameTable />
+            <GameTable cards={ playerHand }/>
         </div>
     );
 }

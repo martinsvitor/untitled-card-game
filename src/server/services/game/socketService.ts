@@ -1,10 +1,9 @@
-import {Server, Socket} from 'socket.io';
-import {GameEngine} from '../../game/gameEngine';
-import {Player} from '../../game/playerClass';
-import {useGameState} from '../../states';
-import {ActionResponse, JoinResponse} from '../../types/socketResponseTypes';
-import {CardItem} from '../../types/cardItem';
-import {GameSearchResult} from '../../types/GameHandlingTypes';
+import { Server, Socket } from 'socket.io';
+import { GameEngine } from '../../game/gameEngine';
+import { Player } from '../../game/playerClass';
+import { useGameState } from '../../states';
+import { CustomResponse } from '../../types/socketResponseTypes';
+import { CardItem } from '../../types/cardItem';
 
 const {createGame, getGame, getAllGames} = useGameState();
 
@@ -25,36 +24,40 @@ export const setupSocket = (io: Server) => {
 
                 socket.on(
                     'join-game',
-                    (gameId: string, playerId: string, playerName: string, respond: (data: JoinResponse) => {}) => {
+                    (gameId: string, playerId: string, playerName: string, respond: (response: CustomResponse) => {}) => {
                         console.log('Player joined', playerId, playerName);
-                        const chosenGame: GameSearchResult = getGame(gameId);
+                        const chosenGame = getGame(gameId);
                         if (!(chosenGame instanceof GameEngine)) {
                             return respond({
-                                isPermitted: false,
-                                message: chosenGame.message
+                                success: false,
+                                message: 'Game not found.'
                             });
                         }
                         if (chosenGame.numberOfPlayers >= chosenGame.maxPlayers) {
                             return respond({
-                                isPermitted: false,
+                                success: false,
                                 message: 'Game already full'
                             });
                         }
                         const player = new Player(playerId, playerName);
-                        chosenGame.addPlayer(player);
+                        const addPlayerResponse = chosenGame.addPlayer(player);
                         socket.join(gameId)
 
                         // Notify other players
-                        io.emit('game-list-update', chosenGame);
+                        io.emit('game-list-update', chosenGame.toDTO());
 
                         respond({
-                            isPermitted: true,
+                            success: true,
                             message: 'Joining successful',
-                            gameData: chosenGame,
+                            gameData: chosenGame.toDTO(),
                         });
 
                         // Notifying all players in the same Game Room
-                        io.to(gameId).emit('game-update', chosenGame);
+                        io.to(gameId).emit('game-update', {
+                            success: addPlayerResponse.success,
+                            message: addPlayerResponse.message,
+                            gameData: chosenGame.toDTO()
+                        });
                     }
                 );
 
@@ -65,29 +68,49 @@ export const setupSocket = (io: Server) => {
                         return;
                     }
                     const currentPlayer = currentGame.getCurrentPlayers().find((player: Player) => player.id === playerId)
+                    // TODO: In Else condition, we should return to avoid starting game, right?
                     if (currentGame && currentPlayer) {
                         if (isPlayerReady) {
-                            currentPlayer.state = 'ready';
-                            io.to(gameId).emit('game-update', currentGame);
+                            const response = currentPlayer.setPlayerStatus('ready');
+                            io.to(gameId).emit('game-update', {
+                                success: response.success,
+                                message: response.message,
+                                gameData: currentGame.toDTO()
+                            } as CustomResponse);
                         } else {
-                            currentPlayer.state = 'waiting';
+                            const response = currentPlayer.setPlayerStatus('waiting');
+                            io.to(gameId).emit('game-update', {
+                                success: response.success,
+                                message: response.message,
+                                gameData: currentGame.toDTO()
+                            })
                         }
                         const allReady = currentGame.players.every(player => player.state === 'ready');
                         if (currentGame.getCurrentPlayers().length > 1 && allReady) {
-                            currentGame.startGame()
+                            const gameResponse = currentGame.startGame()
+                            console.log(gameResponse)
+                            io.to(gameId).emit('game-update', {
+                                success: gameResponse.success,
+                                message: gameResponse.message,
+                                gameData: currentGame.toDTO()
+                            } as CustomResponse);
                         }
                     }
                 });
 
-                socket.on('player-action', (gameId: string, playerId: string, card: CardItem, respond: (data: ActionResponse) => {}) => {
+                socket.on('player-action', (gameId: string, playerId: string, card: CardItem, respond: (response: CustomResponse) => {}) => {
                     const currentGame = getGame(gameId);
                     if (!(currentGame instanceof GameEngine)) {
-                        return respond({response: {success: currentGame.success, message: currentGame.message}});
+                        return respond({success: false, message: 'Game not found.'});
                     }
                     const currentPlayer = currentGame.players.find(player => player.id === playerId);
                     if (currentPlayer) {
-                        const playerAction = currentPlayer.playCard(card, currentGame);
-                        respond({response: playerAction, gameData: currentGame.toDTO()})
+                        const actionResponse = currentPlayer.playCard(card, currentGame);
+                        io.to(gameId).emit('game-update', {
+                            success: actionResponse.success,
+                            message: actionResponse.message,
+                            gameData: currentGame.toDTO()
+                        });
                     }
                 })
 

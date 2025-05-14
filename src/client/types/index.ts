@@ -1,5 +1,5 @@
-import {Dispatch, SetStateAction} from 'react';
-import {GameEngine} from '../../server/game/gameEngine';
+import { Dispatch, SetStateAction } from 'react';
+import { GameDTO } from '../../server/types/GameDTO';
 
 export interface AppContext {
     userId: string,
@@ -11,5 +11,5 @@ export interface AppContext {
  export interface JoinResponse {
      isPermitted: boolean;
      message: string;
-     gameData?: GameEngine
+     gameData?: GameDTO;
  }
