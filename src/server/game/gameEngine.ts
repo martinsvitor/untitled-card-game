@@ -1,9 +1,10 @@
-import {CardItem} from '../types/cardItem.js';
-import {Player} from './playerClass';
-import {CardType} from '../types/cardType.js';
-import {HighScoreType} from '../types/highScoreType.js';
-import {ResponseMessage} from '../types/responseMessage';
-import {GameDTO} from '../types/GameDTO';
+import { CardItem } from '../types/cardItem.js';
+import { Player } from './playerClass';
+import { CardType } from '../types/cardType.js';
+import { HighScoreType } from '../types/highScoreType.js';
+import { GameDTO } from '../types/GameDTO';
+import { CustomResponse } from '../types/socketResponseTypes';
+
 
 export class GameEngine {
     private deck: CardItem[] = [];
@@ -11,6 +12,7 @@ export class GameEngine {
     private activePlayerId = '';
     readonly maxTurnLength: number;
     private partialHighScores: HighScoreType[] = [];
+    public isGameRunning = false;
     public id: string;
     public cardsOnTable: CardItem[] = [];
     public currentRound: number;
@@ -72,7 +74,7 @@ export class GameEngine {
         }
     }
 
-    public addPlayer(player: Player): ResponseMessage {
+    public addPlayer(player: Player): CustomResponse {
         if (this.players.length >= this.maxPlayers) {
             return {
                 success: false,
@@ -103,8 +105,8 @@ export class GameEngine {
         }
     }
 
-    public startGame(): ResponseMessage {
-        if (this.currentRound !== 0) {
+    public startGame(): CustomResponse {
+        if (this.isGameRunning) {
             return {
                 success: false,
                 message: 'Game is already running'
@@ -126,6 +128,7 @@ export class GameEngine {
         this.dealCards(6);
         this.cardsOnTable = [];
         this.startRound(currentPlayer!);
+        this.isGameRunning = true;
         return {
             success: true,
             message: 'Starting game'
@@ -164,7 +167,7 @@ export class GameEngine {
         player.hand.push(this.deck.shift()!);
     }
 
-    public playCard(player: Player, cardPlayed: CardItem): ResponseMessage {
+    public playCard(player: Player, cardPlayed: CardItem): CustomResponse {
         if (this.activePlayerId !== player.id) {
             return {
                 success: false,
@@ -281,6 +284,7 @@ export class GameEngine {
             currentRound,
             maxPlayers,
             numberOfPlayers,
+            numberOfPlayedCards: cardsOnTable.length,
             ...(allPlayed && cardsOnTable)
         };
     }

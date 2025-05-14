@@ -1,5 +1,5 @@
-import {GameEngine} from "../game/gameEngine";
-import {GameSearchResult} from '../types/GameHandlingTypes';
+import { GameEngine } from "../game/gameEngine";
+import { CustomResponse } from '../types/socketResponseTypes';
 
 const gameList: GameEngine[] = [];
 
@@ -9,7 +9,7 @@ export function useGameState() {
         gameList.push(game);
     }
 
-    function removeGame(game: GameEngine): GameSearchResult {
+    function removeGame(game: GameEngine): CustomResponse {
         const deletedGame = gameList.find(game => game.id === game.id);
         if (deletedGame) {
             gameList.splice(gameList.indexOf(game), 1);
@@ -19,12 +19,8 @@ export function useGameState() {
         }
     }
 
-    function getGame(gameId: string): GameEngine | GameSearchResult {
-        const game = gameList.find(game => game.id === gameId);
-        if (!game) {
-            return {success: false, message: 'Game not found.'};
-        }
-        return game
+    function getGame(gameId: string) {
+        return gameList.find(game => game.id === gameId);
     }
 
     function getAllGames() {

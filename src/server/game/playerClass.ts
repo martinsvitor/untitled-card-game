@@ -1,8 +1,8 @@
-import {PlayerType} from "../types/playerType.js";
-import {CardItem} from "../types/cardItem.js";
-import {GameEngine} from "./gameEngine.js";
-import {PlayerState} from "../types/playerState.js";
-import {ResponseMessage} from '../types/responseMessage';
+import { PlayerType } from "../types/playerType.js";
+import { CardItem } from "../types/cardItem.js";
+import { GameEngine } from "./gameEngine.js";
+import { PlayerState } from "../types/playerState.js";
+import { CustomResponse } from '../types/socketResponseTypes';
 
 // TODO: Refactor everything to separate Player and Game classes
 export class Player implements PlayerType {
@@ -23,7 +23,7 @@ export class Player implements PlayerType {
         this.points = 0;
     }
 
-    public drawCard(card: CardItem | undefined): ResponseMessage {
+    public drawCard(card: CardItem | undefined): CustomResponse {
         if (!card) {
             return {
                 success: false,
@@ -37,7 +37,7 @@ export class Player implements PlayerType {
         };
     }
 
-    public playCard(cardToPlay: CardItem, game: GameEngine): ResponseMessage {
+    public playCard(cardToPlay: CardItem, game: GameEngine): CustomResponse {
         const cardIndex = this.hand.findIndex(
             (card) => card.type === cardToPlay.type && card.value === cardToPlay.value
         );
@@ -55,6 +55,14 @@ export class Player implements PlayerType {
 
         //     Notify the game of played card
         return game.playCard(this, cardToPlay);
+    }
+
+    public setPlayerStatus(state: PlayerState): CustomResponse {
+        this.state = state;
+        return {
+            success: true,
+            message: `Player status: ${state}`,
+        }
     }
 
     public winRound(cardsWon: CardItem[], points: number) {

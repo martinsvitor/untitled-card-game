@@ -1,10 +1,11 @@
 import React from 'react';
 import CardHand from './CardHand';
+import { CardItem } from '../../server/types/cardItem';
 
-function GameTable() {
+function GameTable({cards}: { cards: CardItem[] | undefined }) {
     return (
         <div>
-            <CardHand cards={[14.1, 2.2, 3.4, 12.1]} />
+            <CardHand cards={ cards?.map(card => card.value) }/>
         </div>
     );
 }
