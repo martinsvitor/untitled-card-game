@@ -14,7 +14,9 @@ function Game() {
     const [waitingForResponse, setWaitingForResponse] = useState(true);
     const [isPlayerReady, setPlayerReady] = useState(false);
     const [gameState, setGameState] = useState<GameDTO>();
-    const playerHand = gameState?.players.find(player => player.id === userId)?.hand;
+    const playerHand = gameState?.players.find(
+        (player) => player.id === userId
+    )?.hand;
 
     useEffect(() => {
         socket.emit(
@@ -59,7 +61,12 @@ function Game() {
             >
                 Ready
             </button>
-            <GameTable cards={ playerHand }/>
+            <GameTable
+                cards={playerHand}
+                gameId={gameId!}
+                players={gameState?.players}
+                userId={userId}
+            />
         </div>
     );
 }

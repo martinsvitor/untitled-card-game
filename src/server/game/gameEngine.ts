@@ -1,20 +1,17 @@
-import { CardItem } from '../types/cardItem.js';
 import { Player } from './playerClass';
-import { CardType } from '../types/cardType.js';
 import { HighScoreType } from '../types/highScoreType.js';
 import { GameDTO } from '../types/GameDTO';
 import { CustomResponse } from '../types/socketResponseTypes';
 
-
 export class GameEngine {
-    private deck: CardItem[] = [];
+    private deck: number[] = [];
     public players: Player[] = [];
     private activePlayerId = '';
     readonly maxTurnLength: number;
     private partialHighScores: HighScoreType[] = [];
     public isGameRunning = false;
     public id: string;
-    public cardsOnTable: CardItem[] = [];
+    public cardsOnTable: number[] = [];
     public currentRound: number;
     public gameWinner: string = '';
     public maxPlayers: number;
@@ -28,30 +25,9 @@ export class GameEngine {
     }
 
     private initDeck() {
-        const cardTypes = Object.keys(CardType) as CardType[];
-        const cardValues: number[] = [];
-        for (let i = 1; i < 13 * cardTypes.length; i++) {
-            cardValues.push(i + 1);
-        }
-        for (let i = 0; i < cardTypes.length; i++) {
-            let modifier = 0;
-            switch (cardTypes[i]) {
-                case CardType.Clubs:
-                    modifier = 0.4;
-                    break;
-                case CardType.Spades:
-                    modifier = 0.3;
-                    break;
-                case CardType.Hearts:
-                    modifier = 0.2;
-                    break;
-                case CardType.Diamonds:
-                    modifier = 0.1;
-                    break;
-            }
-            for (let j = 0; j < cardValues.length / 4; j++) {
-                const singleCardValue = cardValues[j % 14] + modifier;
-                this.deck.push({type: cardTypes[i], value: singleCardValue});
+        for (let i = 2; i <= 14; i++) {
+            for (let j = 1; j <= 4; j++) {
+                this.deck.push(parseFloat(`${i}.${j}`));
             }
         }
         this.shuffleDeck();
@@ -78,7 +54,7 @@ export class GameEngine {
         if (this.players.length >= this.maxPlayers) {
             return {
                 success: false,
-                message: 'Game is full.'
+                message: 'Game is full.',
             };
         }
 
@@ -88,41 +64,39 @@ export class GameEngine {
         if (isDuplicatePlayer) {
             return {
                 success: false,
-                message: 'The player is already in the game.'
+                message: 'The player is already in the game.',
             };
         }
         this.players.push(player);
         this.numberOfPlayers++;
-        if (this.players.find((player) => player.state === 'active')) {
-            player.state = 'waiting';
-        } else {
-            player.state = 'active';
-            this.activePlayerId = player.id;
-        }
+
+        player.state = 'waiting';
+
         return {
             success: true,
-            message: 'Player successfully added'
-        }
+            message: 'Player successfully added',
+        };
     }
 
     public startGame(): CustomResponse {
         if (this.isGameRunning) {
             return {
                 success: false,
-                message: 'Game is already running'
-            }
+                message: 'Game is already running',
+            };
         }
 
         if (this.players.length <= 1) {
             return {
                 success: false,
-                message: 'Not enough players to start the game'
-            }
+                message: 'Not enough players to start the game',
+            };
         }
 
-        const currentPlayer = this.players.find(
-            (player) => player.id === this.activePlayerId
-        );
+        const currentPlayer =
+            this.players[Math.floor(Math.random() * this.players.length)];
+
+        this.activePlayerId = currentPlayer.id;
 
         this.initDeck();
         this.dealCards(6);
@@ -131,11 +105,11 @@ export class GameEngine {
         this.isGameRunning = true;
         return {
             success: true,
-            message: 'Starting game'
+            message: 'Starting game',
         };
     }
 
-    public startRound(player: Player) {
+    public startRound(currentPlayer: Player) {
         this.currentRound++;
 
         if (this.deck.length === 0) {
@@ -143,20 +117,20 @@ export class GameEngine {
                 this.endGame();
                 return;
             }
-            this.startPlayerAction(player);
+            this.startPlayerAction(currentPlayer);
             return;
         }
 
         this.players.forEach((player: Player) => {
+            player.state = 'waiting';
             if (player.hand.length < 6) {
                 this.getNewCard(player);
             }
         });
 
-        if (player.state !== 'active') {
-            return;
-        }
-        this.startPlayerAction(player);
+        currentPlayer.state = 'active';
+
+        this.startPlayerAction(currentPlayer);
     }
 
     private startPlayerAction(player: Player) {
@@ -167,23 +141,21 @@ export class GameEngine {
         player.hand.push(this.deck.shift()!);
     }
 
-    public playCard(player: Player, cardPlayed: CardItem): CustomResponse {
+    public playCard(player: Player, cardPlayed: number): CustomResponse {
         if (this.activePlayerId !== player.id) {
             return {
                 success: false,
-                message: 'This is not this players\' action'
+                message: "This is not this players' action",
             };
         }
-        console.log(
-            `${player.name} played ${cardPlayed.value} of ${cardPlayed.type}`
-        );
+        console.log(`${player.name} played ${cardPlayed}`);
 
         this.cardsOnTable.push(cardPlayed);
         this.endPlayerAction(player);
         return {
             success: true,
-            message: `${player.name} played ${cardPlayed.value} of ${cardPlayed.type}`
-        }
+            message: `${player.name} played ${cardPlayed}`,
+        };
     }
 
     private endPlayerAction(currentPlayer: Player) {
@@ -200,29 +172,19 @@ export class GameEngine {
         }
     }
 
-    private computeRoundWinner(): Player[] {
-        const highestCardValue = Math.max(
-            ...this.cardsOnTable.map((card) => card.value)
-        );
-        const winningCard = this.cardsOnTable.filter(
-            (card) => card.value == highestCardValue
+    private computeRoundWinner(): Player | undefined {
+        const highestCardValue = Math.max(...this.cardsOnTable);
+        const winningPlayer = this.players.find(
+            (player) => player.playedCard === highestCardValue
         );
 
-        const winners = winningCard.map(
-            (card) =>
-                this.players.find((player) => player.id === card.playedBy)!
-        );
-        if (winningCard.length > 1) {
-            // Clubs > Spades > Hearts > Diamonds
-            console.warn('Should never be arrived');
-            return winners.map((winner) => winner);
+        if (winningPlayer) {
+            winningPlayer.winRound(this.cardsOnTable);
+            return winningPlayer;
+        } else {
+            console.log('Winner could not be determined');
+            return;
         }
-        const pointsInTheRound = this.cardsOnTable.reduce(
-            (acc, currentValue) => acc + Math.trunc(currentValue.value),
-            0
-        );
-        winners[0].winRound(this.cardsOnTable, pointsInTheRound);
-        return winners;
     }
 
     public finishRound() {
@@ -240,7 +202,7 @@ export class GameEngine {
         )!;
         this.cardsOnTable = [];
         this.players.forEach((player) => {
-            player.state = 'waiting'
+            player.state = 'waiting';
             player.playedCard = null;
         });
         nextPlayer.state = 'active';
@@ -275,8 +237,15 @@ export class GameEngine {
     }
 
     public toDTO(): GameDTO {
-        const {id, players, maxPlayers, numberOfPlayers, currentRound, cardsOnTable} = this;
-        const allPlayed = players.every(player => player.playedCard !== null)
+        const {
+            id,
+            players,
+            maxPlayers,
+            numberOfPlayers,
+            currentRound,
+            cardsOnTable,
+        } = this;
+        const allPlayed = players.every((player) => player.playedCard !== null);
 
         return {
             id,
@@ -285,7 +254,7 @@ export class GameEngine {
             maxPlayers,
             numberOfPlayers,
             numberOfPlayedCards: cardsOnTable.length,
-            ...(allPlayed && cardsOnTable)
+            ...(allPlayed && cardsOnTable),
         };
     }
 }

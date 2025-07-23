@@ -1,20 +1,24 @@
-import { PlayerType } from "../types/playerType.js";
-import { CardItem } from "../types/cardItem.js";
-import { GameEngine } from "./gameEngine.js";
-import { PlayerState } from "../types/playerState.js";
+import { PlayerType } from '../types/playerType.js';
+import { GameEngine } from './gameEngine.js';
+import { PlayerState } from '../types/playerState.js';
 import { CustomResponse } from '../types/socketResponseTypes';
 
 // TODO: Refactor everything to separate Player and Game classes
 export class Player implements PlayerType {
-    collectedCards: CardItem[];
-    hand: CardItem[];
-    playedCard: CardItem | null = null;
+    collectedCards: number[];
+    hand: number[];
+    playedCard: number | null = null;
     id: string;
     name: string;
     state: PlayerState;
     points: number;
 
-    constructor(id: string, name: string, collectedCards: CardItem[] = [], hand: CardItem[] = []) {
+    constructor(
+        id: string,
+        name: string,
+        collectedCards: number[] = [],
+        hand: number[] = []
+    ) {
         this.id = id;
         this.name = name;
         this.collectedCards = collectedCards;
@@ -23,35 +27,34 @@ export class Player implements PlayerType {
         this.points = 0;
     }
 
-    public drawCard(card: CardItem | undefined): CustomResponse {
+    public drawCard(card: number | undefined): CustomResponse {
         if (!card) {
             return {
                 success: false,
-                message: 'No cards in the deck'
+                message: 'No cards in the deck',
             };
         }
         this.hand.push(card);
         return {
             success: true,
-            message: 'Got new card'
+            message: 'Got new card',
         };
     }
 
-    public playCard(cardToPlay: CardItem, game: GameEngine): CustomResponse {
-        const cardIndex = this.hand.findIndex(
-            (card) => card.type === cardToPlay.type && card.value === cardToPlay.value
-        );
+    public playCard(cardToPlay: number, game: GameEngine): CustomResponse {
+        const cardIndex = this.hand.findIndex((card) => card === cardToPlay);
 
         if (cardIndex === -1) {
             return {
                 success: false,
-                message: 'No cards left in hand'
+                message: 'No cards left in hand',
             };
         }
         this.playedCard = cardToPlay;
-        cardToPlay.playedBy = this.id;
         //     Remove the card from player's hand
         this.hand.splice(cardIndex, 1);
+
+        this.setPlayerStatus('played');
 
         //     Notify the game of played card
         return game.playCard(this, cardToPlay);
@@ -62,21 +65,18 @@ export class Player implements PlayerType {
         return {
             success: true,
             message: `Player status: ${state}`,
-        }
+        };
     }
 
-    public winRound(cardsWon: CardItem[], points: number) {
-        this.collectedCards = cardsWon;
-        this.points += points;
+    public winRound(cardsWon: number[]) {
+        this.collectedCards.push(...cardsWon);
     }
 
     public resetCollectedCards() {
-        this.collectedCards.map(card => card.playedBy = '');
         this.collectedCards = [];
     }
 
     public getPoints() {
         return this.points;
     }
-
 }
