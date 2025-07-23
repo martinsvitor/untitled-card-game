@@ -1,11 +1,20 @@
 import React from 'react';
 import CardHand from './CardHand';
-import { CardItem } from '../../server/types/cardItem';
+import { PlayerType } from '../../server/types/playerType';
 
-function GameTable({cards}: { cards: CardItem[] | undefined }) {
+interface GameTableProps {
+    cards: number[] | undefined;
+    gameId: string;
+    players: PlayerType[] | undefined;
+    userId: string;
+}
+
+function GameTable({ cards, gameId, players, userId }: GameTableProps) {
+    const thisPlayer = players?.find((player) => player.id === userId);
+
     return (
         <div>
-            <CardHand cards={ cards?.map(card => card.value) }/>
+            <CardHand cards={cards} gameId={gameId} player={thisPlayer} />
         </div>
     );
 }

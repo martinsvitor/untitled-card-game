@@ -1,5 +1,4 @@
-import {Player} from '../game/playerClass';
-import {CardItem} from './cardItem';
+import { Player } from '../game/playerClass';
 
 export interface GameDTO {
     id: string;
@@ -8,5 +7,5 @@ export interface GameDTO {
     maxPlayers: number;
     numberOfPlayers: number;
     numberOfPlayedCards: number;
-    cardsOnTable?: CardItem[];
+    cardsOnTable?: number[];
 }
