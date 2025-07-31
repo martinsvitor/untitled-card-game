@@ -6,12 +6,12 @@ import { GlobalContext } from '../App';
 import { PlayerType } from '../../server/types/playerType';
 
 interface CardHandProps {
-    cards: number[] | undefined;
     gameId: string;
     player: PlayerType;
+    isFaceUp?: boolean;
 }
 
-function CardHand({ cards, gameId, player }: CardHandProps) {
+function CardHand({ gameId, player, isFaceUp }: CardHandProps) {
     const { userId } = useContext(GlobalContext);
     console.log(player);
     function playCard(card: number) {
@@ -21,7 +21,7 @@ function CardHand({ cards, gameId, player }: CardHandProps) {
         return;
     }
 
-    const cardElements = cards?.map((card) => {
+    const cardImages = player.hand?.map((card) => {
         return (
             <div onClick={() => playCard(card)} key={card} className='card'>
                 <img src={getCardImage(card)} alt={getCardName(card)} />
@@ -29,7 +29,15 @@ function CardHand({ cards, gameId, player }: CardHandProps) {
         );
     });
 
-    return <div className='hand'>{cardElements}</div>;
+    const cardBacks = player.hand?.map((card) => {
+        return (
+            <div key={card} className='card'>
+                <img src={getCardImage(0)} alt={'Back of a card'} />
+            </div>
+        );
+    });
+
+    return <div className='hand'>{isFaceUp ? cardImages : cardBacks}</div>;
 }
 
 export default CardHand;

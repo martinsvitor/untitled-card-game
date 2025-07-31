@@ -1,4 +1,4 @@
-export function getCardName(cardValue) {
+export function getCardName(cardValue: number): string {
     const rankValue = cardValue.toString().split('.')[0];
     const suitValue = cardValue.toString().split('.')[1];
 
@@ -29,7 +29,7 @@ export function getCardName(cardValue) {
     const suit = suitLookup[suitValue];
 
     if (!rank || !suit) {
-        return null;
+        return 'Invalid card value';
     }
 
     return `${suit} ${rank}`;

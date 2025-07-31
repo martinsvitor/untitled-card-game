@@ -62,7 +62,6 @@ function Game() {
                 Ready
             </button>
             <GameTable
-                cards={playerHand}
                 gameId={gameId!}
                 players={gameState?.players}
                 userId={userId}

@@ -3,18 +3,22 @@ import CardHand from './CardHand';
 import { PlayerType } from '../../server/types/playerType';
 
 interface GameTableProps {
-    cards: number[] | undefined;
     gameId: string;
     players: PlayerType[] | undefined;
     userId: string;
 }
 
-function GameTable({ cards, gameId, players, userId }: GameTableProps) {
+function GameTable({ gameId, players, userId }: GameTableProps) {
     const thisPlayer = players?.find((player) => player.id === userId);
+    const otherPlayers = players?.filter((player) => player.id != userId);
+    const otherPlayersHands = otherPlayers?.map((player) => (
+        <CardHand gameId={gameId} player={player} key={player.id} />
+    ));
 
     return (
         <div>
-            <CardHand cards={cards} gameId={gameId} player={thisPlayer} />
+            <CardHand gameId={gameId} player={thisPlayer!} isFaceUp />
+            {otherPlayersHands}
         </div>
     );
 }

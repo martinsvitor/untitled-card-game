@@ -1,10 +1,15 @@
-export function getCardImage(cardValue: number) {
+export function getCardImage(cardValue: number): string {
     const imageLocation = '../assets/cards/';
 
     const cardImages = import.meta.glob('../assets/cards/*.png', {
         eager: true,
         import: 'default',
     });
+
+    if (cardValue === 0) {
+        console.log(imageLocation + 'card_back.png');
+        return cardImages[`${imageLocation}card_back.png`];
+    }
 
     const rankValue = cardValue.toString().split('.')[0];
     const suitValue = cardValue.toString().split('.')[1];
@@ -36,7 +41,7 @@ export function getCardImage(cardValue: number) {
     const suit = suitLookup[suitValue];
 
     if (!rank || !suit) {
-        return null;
+        return 'Invalid card value';
     }
 
     return cardImages[`${imageLocation}${suit}_${rank}.png`];
