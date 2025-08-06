@@ -7,7 +7,6 @@ export function getCardImage(cardValue: number): string {
     });
 
     if (cardValue === 0) {
-        console.log(imageLocation + 'card_back.png');
         return cardImages[`${imageLocation}card_back.png`];
     }
 

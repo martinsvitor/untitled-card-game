@@ -1,4 +1,8 @@
 export function getCardName(cardValue: number): string {
+    if (cardValue === 0) {
+        return 'Unknown card';
+    }
+
     const rankValue = cardValue.toString().split('.')[0];
     const suitValue = cardValue.toString().split('.')[1];
 
