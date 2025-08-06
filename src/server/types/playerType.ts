@@ -6,4 +6,5 @@ export interface PlayerType {
     hand: number[];
     collectedCards: number[];
     state: PlayerState;
+    playedCard?: number;
 }

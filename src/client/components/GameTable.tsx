@@ -1,5 +1,6 @@
 import React from 'react';
 import CardHand from './CardHand';
+import PlayedCards from './PlayedCards';
 import { PlayerType } from '../../server/types/playerType';
 
 interface GameTableProps {
@@ -12,12 +13,13 @@ function GameTable({ gameId, players, userId }: GameTableProps) {
     const thisPlayer = players?.find((player) => player.id === userId);
     const otherPlayers = players?.filter((player) => player.id != userId);
     const otherPlayersHands = otherPlayers?.map((player) => (
-        <CardHand gameId={gameId} player={player} key={player.id} />
+        <CardHand gameId={gameId} player={player} key={player.id} isFaceDown />
     ));
 
     return (
         <div>
-            <CardHand gameId={gameId} player={thisPlayer!} isFaceUp />
+            <PlayedCards players={players} />
+            <CardHand gameId={gameId} player={thisPlayer!} />
             {otherPlayersHands}
         </div>
     );
