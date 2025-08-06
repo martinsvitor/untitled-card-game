@@ -1,10 +1,10 @@
-import { Server, Socket } from 'socket.io';
-import { GameEngine } from '../../game/gameEngine';
-import { Player } from '../../game/playerClass';
-import { useGameState } from '../../states';
-import { CustomResponse } from '../../types/socketResponseTypes';
+import {Server, Socket} from 'socket.io';
+import {GameEngine} from '../../game/gameEngine';
+import {Player} from '../../game/playerClass';
+import {useGameState} from '../../states';
+import {CustomResponse} from '../../types/socketResponseTypes';
 
-const { createGame, getGame, getAllGames } = useGameState();
+const {createGame, getGame, getAllGames} = useGameState();
 
 export const setupSocket = (io: Server) => {
     // When the player gets to the game selection room
@@ -24,8 +24,7 @@ export const setupSocket = (io: Server) => {
             }
         );
 
-        socket.on(
-            'join-game',
+        socket.on('join-game',
             (
                 gameId: string,
                 playerId: string,
@@ -40,12 +39,7 @@ export const setupSocket = (io: Server) => {
                         message: 'Game not found.',
                     });
                 }
-                if (chosenGame.numberOfPlayers >= chosenGame.maxPlayers) {
-                    return respond({
-                        success: false,
-                        message: 'Game already full',
-                    });
-                }
+
                 const player = new Player(playerId, playerName);
                 const addPlayerResponse = chosenGame.addPlayer(player);
                 socket.join(gameId);
@@ -53,18 +47,22 @@ export const setupSocket = (io: Server) => {
                 // Notify other players
                 io.emit('game-list-update', chosenGame.toDTO());
 
-                respond({
-                    success: true,
-                    message: 'Joining successful',
-                    gameData: chosenGame.toDTO(),
-                });
+                if (addPlayerResponse.success) {
+                    // Notifying all players in the same Game Room
+                    io.to(gameId).emit('game-update', {
+                        success: addPlayerResponse.success,
+                        message: addPlayerResponse.message,
+                        gameData: chosenGame.toDTO(),
+                    });
 
-                // Notifying all players in the same Game Room
-                io.to(gameId).emit('game-update', {
-                    success: addPlayerResponse.success,
-                    message: addPlayerResponse.message,
-                    gameData: chosenGame.toDTO(),
-                });
+                    return respond({
+                        success: addPlayerResponse.success,
+                        message: addPlayerResponse.message,
+                        gameData: chosenGame.toDTO(),
+                    })
+                } else {
+                    return respond(addPlayerResponse);
+                }
             }
         );
 

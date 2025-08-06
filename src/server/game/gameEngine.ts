@@ -1,8 +1,9 @@
-import { Player } from './playerClass';
-import { HighScoreType } from '../types/highScoreType.js';
-import { GameDTO } from '../types/GameDTO';
-import { CustomResponse } from '../types/socketResponseTypes';
-
+import {Player} from './playerClass';
+import {HighScoreType} from '../types/highScoreType.js';
+import {GameDTO} from '../types/GameDTO';
+import {CustomResponse} from '../types/socketResponseTypes';
+// TODO: Fix players turns for the first round (it's not clear who plays first)
+// TODO: Fix what happens when odd number of players. Someone has cards left. DECISION: The moment one player runs out of cards, the game ends.
 export class GameEngine {
     private deck: number[] = [];
     public players: Player[] = [];
@@ -58,12 +59,19 @@ export class GameEngine {
             };
         }
 
+        if (this.isGameRunning) {
+            return {
+                success: false,
+                message: 'Game is already running',
+            };
+        }
+
         const isDuplicatePlayer = this.players.some(
             (existingPlayer) => existingPlayer.id === player.id
         );
         if (isDuplicatePlayer) {
             return {
-                success: false,
+                success: true,
                 message: 'The player is already in the game.',
             };
         }
@@ -225,6 +233,8 @@ export class GameEngine {
         const finalScores = this.computeHighScores();
         const winnerAnnouncement = `Game Over. ${finalScores[0].player.name} won with ${finalScores[0].points} points`;
         this.gameWinner = finalScores[0].player.name;
+        this.isGameRunning = false;
+        this.players.forEach((player) => player.setPlayerStatus('waiting'));
         console.log(winnerAnnouncement);
     }
 
