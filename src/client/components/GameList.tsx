@@ -37,7 +37,7 @@ function GameList() {
             const {id, players} = game;
             return (
                 <li key={id}>
-                    <Link to={id}>{id} / {players.length}</Link>
+                    <Link to={id}>{id} - {game.players.length}/{game.maxPlayers}</Link>
                 </li>
             );
         });

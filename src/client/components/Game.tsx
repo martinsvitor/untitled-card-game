@@ -1,19 +1,25 @@
-import { useParams, useNavigate } from 'react-router';
-import { useEffect, useState, useContext } from 'react';
-import { socket } from '../helper/socketHandler';
-import { GlobalContext } from '../App';
+import {useParams, useNavigate} from 'react-router';
+import {useEffect, useState, useContext} from 'react';
+import {socket} from '../helper/socketHandler';
+import {GlobalContext} from '../App';
 import React from 'react';
 import GameTable from './GameTable';
-import { GameDTO } from '../../server/types/GameDTO';
-import { CustomResponse } from '../../server/types/socketResponseTypes';
+import {GameDTO} from '../../server/types/GameDTO';
+import {CustomResponse} from '../../server/types/socketResponseTypes';
+
+enum ReadyColors {
+    Green = '#006400',
+    Red = '#8B0000'
+}
 
 function Game() {
-    const { setMessage, userId, username } = useContext(GlobalContext);
-    const { gameId } = useParams();
+    const {setMessage, userId, username} = useContext(GlobalContext);
+    const {gameId} = useParams();
     const navigate = useNavigate();
     const [waitingForResponse, setWaitingForResponse] = useState(true);
     const [isPlayerReady, setPlayerReady] = useState(false);
     const [gameState, setGameState] = useState<GameDTO>();
+    const [readyButtonColor, setReadyButtonColor] = useState<ReadyColors>(ReadyColors.Red)
     const playerHand = gameState?.players.find(
         (player) => player.id === userId
     )?.hand;
@@ -25,7 +31,7 @@ function Game() {
             userId,
             username,
             (response: CustomResponse) => {
-                const { success, message, gameData } = response;
+                const {success, message, gameData} = response;
 
                 if (success) {
                     setWaitingForResponse(false);
@@ -46,6 +52,16 @@ function Game() {
         };
     }, []);
 
+    useEffect(() => {
+        setReadyButtonColor((previousState) => {
+            if (previousState === ReadyColors.Green) {
+                return ReadyColors.Red;
+            } else {
+                return ReadyColors.Green;
+            }
+        });
+    }, [isPlayerReady]);
+
     return waitingForResponse ? (
         <div>Joining...</div>
     ) : (
@@ -58,6 +74,7 @@ function Game() {
                     setPlayerReady(!isPlayerReady);
                     socket.emit('change-ready', gameId, userId, !isPlayerReady);
                 }}
+                style={{color: readyButtonColor}}
             >
                 Ready
             </button>
