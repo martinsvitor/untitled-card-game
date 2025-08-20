@@ -8,13 +8,20 @@ interface CardHandProps {
     gameId: string;
     player: PlayerType;
     isFaceDown?: boolean;
+    relativePosition: number;
 }
 
-function CardHand({ gameId, player, isFaceDown }: CardHandProps) {
+function CardHand({
+    gameId,
+    player,
+    isFaceDown,
+    relativePosition,
+}: CardHandProps) {
     const { userId } = useContext(GlobalContext);
 
-    console.log(player);
-
+    const angle = relativePosition * 360;
+    console.log('Relative position: ', relativePosition);
+    console.log('Angle: ', angle);
     function playCard(card: number) {
         if (player.state === 'active') {
             socket.emit('player-action', gameId, userId, card);
@@ -25,6 +32,7 @@ function CardHand({ gameId, player, isFaceDown }: CardHandProps) {
     const cardImages = player.hand?.map((card) => {
         return (
             <Card
+                key={card}
                 cardValue={card}
                 playCard={playCard}
                 isFaceDown={isFaceDown}
@@ -32,7 +40,11 @@ function CardHand({ gameId, player, isFaceDown }: CardHandProps) {
         );
     });
 
-    return <div className='hand'>{cardImages}</div>;
+    return (
+        <div className='hand' style={{ transform: `rotate(${angle}deg)` }}>
+            {cardImages}
+        </div>
+    );
 }
 
 export default CardHand;
