@@ -1,7 +1,7 @@
-import {Player} from './playerClass';
-import {HighScoreType} from '../types/highScoreType.js';
-import {GameDTO} from '../types/GameDTO';
-import {CustomResponse} from '../types/socketResponseTypes';
+import { Player } from './playerClass';
+import { HighScoreType } from '../types/highScoreType.js';
+import { GameDTO } from '../types/GameDTO';
+import { CustomResponse } from '../types/socketResponseTypes';
 // TODO: Fix players turns for the first round (it's not clear who plays first)
 // TODO: Fix what happens when odd number of players. Someone has cards left. DECISION: The moment one player runs out of cards, the game ends.
 export class GameEngine {
@@ -52,6 +52,17 @@ export class GameEngine {
     }
 
     public addPlayer(player: Player): CustomResponse {
+        const isDuplicatePlayer = this.players.some(
+            (existingPlayer) => existingPlayer.id === player.id
+        );
+
+        if (isDuplicatePlayer) {
+            return {
+                success: true,
+                message: 'The player is already in the game.',
+            };
+        }
+
         if (this.players.length >= this.maxPlayers) {
             return {
                 success: false,
@@ -66,15 +77,6 @@ export class GameEngine {
             };
         }
 
-        const isDuplicatePlayer = this.players.some(
-            (existingPlayer) => existingPlayer.id === player.id
-        );
-        if (isDuplicatePlayer) {
-            return {
-                success: true,
-                message: 'The player is already in the game.',
-            };
-        }
         this.players.push(player);
         this.numberOfPlayers++;
 
